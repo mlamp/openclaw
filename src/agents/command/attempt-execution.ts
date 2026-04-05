@@ -24,6 +24,7 @@ import { formatAgentInternalEventsForPrompt } from "../internal-events.js";
 import { hasInternalRuntimeContext } from "../internal-runtime-context.js";
 import { isCliProvider } from "../model-selection.js";
 import { prepareSessionManagerForRun } from "../pi-embedded-runner/session-manager-init.js";
+import type { EmbeddedPiRunResult } from "../pi-embedded-runner/types.js";
 import { runEmbeddedPiAgent } from "../pi-embedded.js";
 import { buildWorkspaceSkillSnapshot } from "../skills.js";
 import { resolveAgentRunContext } from "./run-context.js";
@@ -237,6 +238,22 @@ const ACP_TRANSCRIPT_USAGE = {
   },
 } as const;
 
+/** Map CLI agentMeta.usage into the transcript usage shape. */
+function resolveCliTranscriptUsage(result: EmbeddedPiRunResult) {
+  const u = result.meta.agentMeta?.usage;
+  if (!u) {
+    return { ...ACP_TRANSCRIPT_USAGE, cost: { ...ACP_TRANSCRIPT_USAGE.cost } };
+  }
+  return {
+    input: u.input ?? 0,
+    output: u.output ?? 0,
+    cacheRead: u.cacheRead ?? 0,
+    cacheWrite: u.cacheWrite ?? 0,
+    totalTokens: u.total ?? 0,
+    cost: { ...ACP_TRANSCRIPT_USAGE.cost },
+  };
+}
+
 export async function persistAcpTurnTranscript(params: {
   body: string;
   finalText: string;
@@ -300,6 +317,85 @@ export async function persistAcpTurnTranscript(params: {
 
   emitSessionTranscriptUpdate(sessionFile);
   return sessionEntry;
+}
+
+/**
+ * Persist a CLI-backend turn (user prompt + assistant reply) to the session
+ * transcript so that `readSubagentOutput()` can find it via `chat.history`.
+ *
+ * Without this, CLI-backend subagent results are lost because the CLI runner
+ * does not write to the transcript (unlike the embedded PI runner which
+ * manages its own SessionManager internally).
+ */
+export async function persistCliTurnTranscript(
+  result: EmbeddedPiRunResult,
+  params: {
+    body: string;
+    sessionId: string;
+    sessionKey: string;
+    sessionEntry: SessionEntry | undefined;
+    sessionStore?: Record<string, SessionEntry>;
+    storePath?: string;
+    sessionAgentId: string;
+    threadId?: string | number;
+    sessionCwd: string;
+  },
+): Promise<void> {
+  const promptText = params.body;
+  const replyText = result.payloads
+    ?.map((p) => p.text)
+    .filter(Boolean)
+    .join("\n");
+  if (!promptText && !replyText) {
+    return;
+  }
+
+  const { sessionFile } = await resolveSessionTranscriptFile({
+    sessionId: params.sessionId,
+    sessionKey: params.sessionKey,
+    sessionEntry: params.sessionEntry,
+    sessionStore: params.sessionStore,
+    storePath: params.storePath,
+    agentId: params.sessionAgentId,
+    threadId: params.threadId,
+  });
+  const hadSessionFile = await fs
+    .access(sessionFile)
+    .then(() => true)
+    .catch(() => false);
+  const sessionManager = SessionManager.open(sessionFile);
+  await prepareSessionManagerForRun({
+    sessionManager,
+    sessionFile,
+    hadSessionFile,
+    sessionId: params.sessionId,
+    cwd: params.sessionCwd,
+  });
+
+  if (promptText) {
+    sessionManager.appendMessage({
+      role: "user",
+      content: promptText,
+      timestamp: Date.now(),
+    });
+  }
+
+  if (replyText) {
+    const provider = result.meta.agentMeta?.provider ?? "cli";
+    const model = result.meta.agentMeta?.model ?? "cli";
+    sessionManager.appendMessage({
+      role: "assistant",
+      content: [{ type: "text", text: replyText }],
+      api: "cli",
+      provider,
+      model,
+      usage: resolveCliTranscriptUsage(result),
+      stopReason: "stop",
+      timestamp: Date.now(),
+    });
+  }
+
+  emitSessionTranscriptUpdate(sessionFile);
 }
 
 export function runAgentAttempt(params: {
@@ -374,66 +470,92 @@ export function runAgentAttempt(params: {
         messageProvider: params.messageChannel,
         agentAccountId: params.runContext.accountId,
       });
-    return runCliWithSession(cliSessionBinding?.sessionId).catch(async (err) => {
-      if (
-        err instanceof FailoverError &&
-        err.reason === "session_expired" &&
-        cliSessionBinding?.sessionId &&
-        params.sessionKey &&
-        params.sessionStore &&
-        params.storePath
-      ) {
-        log.warn(
-          `CLI session expired, clearing from session store: provider=${sanitizeForLog(params.providerOverride)} sessionKey=${params.sessionKey}`,
-        );
-
-        const entry = params.sessionStore[params.sessionKey];
-        if (entry) {
-          const updatedEntry = { ...entry };
-          clearCliSession(updatedEntry, params.providerOverride);
-          updatedEntry.updatedAt = Date.now();
-
-          await persistSessionEntry({
-            sessionStore: params.sessionStore,
-            sessionKey: params.sessionKey,
-            storePath: params.storePath,
-            entry: updatedEntry,
-            clearedFields: ["cliSessionBindings", "cliSessionIds", "claudeCliSessionId"],
-          });
-
-          params.sessionEntry = updatedEntry;
-        }
-
-        return runCliWithSession(undefined).then(async (result) => {
-          if (
-            result.meta.agentMeta?.cliSessionBinding?.sessionId &&
-            params.sessionKey &&
-            params.sessionStore &&
-            params.storePath
-          ) {
-            const entry = params.sessionStore[params.sessionKey];
-            if (entry) {
-              const updatedEntry = { ...entry };
-              setCliSessionBinding(
-                updatedEntry,
-                params.providerOverride,
-                result.meta.agentMeta.cliSessionBinding,
-              );
-              updatedEntry.updatedAt = Date.now();
-
-              await persistSessionEntry({
-                sessionStore: params.sessionStore,
-                sessionKey: params.sessionKey,
-                storePath: params.storePath,
-                entry: updatedEntry,
-              });
-            }
-          }
-          return result;
+    const persistCliResult = async (result: EmbeddedPiRunResult) => {
+      try {
+        await persistCliTurnTranscript(result, {
+          body: effectivePrompt,
+          sessionId: params.sessionId,
+          // For subagent runs sessionKey is always the generated childSessionKey;
+          // the sessionId fallback only applies to top-level agent runs where
+          // readSubagentOutput is not used.
+          sessionKey: params.sessionKey ?? params.sessionId,
+          sessionEntry: params.sessionEntry,
+          sessionStore: params.sessionStore,
+          storePath: params.storePath,
+          sessionAgentId: params.sessionAgentId,
+          threadId: params.opts.threadId,
+          sessionCwd: params.workspaceDir,
         });
+      } catch (error) {
+        log.error(
+          `CLI transcript persistence failed for session=${params.sessionId} key=${params.sessionKey}: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
-      throw err;
-    });
+      return result;
+    };
+
+    return runCliWithSession(cliSessionBinding?.sessionId)
+      .catch(async (err) => {
+        if (
+          err instanceof FailoverError &&
+          err.reason === "session_expired" &&
+          cliSessionBinding?.sessionId &&
+          params.sessionKey &&
+          params.sessionStore &&
+          params.storePath
+        ) {
+          log.warn(
+            `CLI session expired, clearing from session store: provider=${sanitizeForLog(params.providerOverride)} sessionKey=${params.sessionKey}`,
+          );
+
+          const entry = params.sessionStore[params.sessionKey];
+          if (entry) {
+            const updatedEntry = { ...entry };
+            clearCliSession(updatedEntry, params.providerOverride);
+            updatedEntry.updatedAt = Date.now();
+
+            await persistSessionEntry({
+              sessionStore: params.sessionStore,
+              sessionKey: params.sessionKey,
+              storePath: params.storePath,
+              entry: updatedEntry,
+              clearedFields: ["cliSessionBindings", "cliSessionIds", "claudeCliSessionId"],
+            });
+
+            params.sessionEntry = updatedEntry;
+          }
+
+          return runCliWithSession(undefined).then(async (result) => {
+            if (
+              result.meta.agentMeta?.cliSessionBinding?.sessionId &&
+              params.sessionKey &&
+              params.sessionStore &&
+              params.storePath
+            ) {
+              const entry = params.sessionStore[params.sessionKey];
+              if (entry) {
+                const updatedEntry = { ...entry };
+                setCliSessionBinding(
+                  updatedEntry,
+                  params.providerOverride,
+                  result.meta.agentMeta.cliSessionBinding,
+                );
+                updatedEntry.updatedAt = Date.now();
+
+                await persistSessionEntry({
+                  sessionStore: params.sessionStore,
+                  sessionKey: params.sessionKey,
+                  storePath: params.storePath,
+                  entry: updatedEntry,
+                });
+              }
+            }
+            return result;
+          });
+        }
+        throw err;
+      })
+      .then(persistCliResult);
   }
 
   return runEmbeddedPiAgent({
