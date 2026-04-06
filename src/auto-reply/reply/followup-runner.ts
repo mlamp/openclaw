@@ -17,7 +17,7 @@ import { defaultRuntime } from "../../runtime.js";
 import { isInternalMessageChannel } from "../../utils/message-channel.js";
 import { stripHeartbeatToken } from "../heartbeat.js";
 import type { OriginatingChannelType } from "../templating.js";
-import { isSilentReplyText, SILENT_REPLY_TOKEN } from "../tokens.js";
+import { HEARTBEAT_TOKEN, isSilentReplyText, SILENT_REPLY_TOKEN } from "../tokens.js";
 import type { GetReplyOptions, ReplyPayload } from "../types.js";
 import { runPreflightCompactionIfNeeded } from "./agent-runner-memory.js";
 import { resolveRunAuthProfile } from "./agent-runner-utils.js";
@@ -315,7 +315,7 @@ export function createFollowupRunner(params: {
       }
       const sanitizedPayloads = payloadArray.flatMap((payload) => {
         const text = payload.text;
-        if (!text || !text.includes("HEARTBEAT_OK")) {
+        if (!text || !text.includes(HEARTBEAT_TOKEN)) {
           return [payload];
         }
         const stripped = stripHeartbeatToken(text, { mode: "message" });

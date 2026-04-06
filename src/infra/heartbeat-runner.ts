@@ -554,7 +554,7 @@ function resolveHeartbeatRunPrompt(params: {
 
 ${taskList}
 
-After completing all due tasks, reply HEARTBEAT_OK.`;
+After completing all due tasks, reply PULSE_ACK.`;
 
       // Preserve HEARTBEAT.md directives (non-task content)
       if (params.heartbeatFileContent) {

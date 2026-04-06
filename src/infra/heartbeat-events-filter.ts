@@ -15,13 +15,10 @@ export function buildCronEventPrompt(
     if (!deliverToUser) {
       return (
         "A scheduled cron event was triggered, but no event content was found. " +
-        "Handle this internally and reply HEARTBEAT_OK when nothing needs user-facing follow-up."
+        "Handle this internally and reply PULSE_ACK when nothing needs user-facing follow-up."
       );
     }
-    return (
-      "A scheduled cron event was triggered, but no event content was found. " +
-      "Reply HEARTBEAT_OK."
-    );
+    return "A scheduled cron event was triggered, but no event content was found. Reply PULSE_ACK.";
   }
   if (!deliverToUser) {
     return (

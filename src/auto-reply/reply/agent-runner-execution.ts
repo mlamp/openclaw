@@ -604,13 +604,13 @@ export async function runAgentTurnWithFallback(params: {
         if (params.followupRun.run.silentExpected) {
           return { skip: true };
         }
-        if (!params.isHeartbeat && text?.includes("HEARTBEAT_OK")) {
+        if (!params.isHeartbeat && text?.includes(HEARTBEAT_TOKEN)) {
           const stripped = stripHeartbeatToken(text, {
             mode: "message",
           });
           if (stripped.didStrip && !didLogHeartbeatStrip) {
             didLogHeartbeatStrip = true;
-            logVerbose("Stripped stray HEARTBEAT_OK token from reply");
+            logVerbose(`Stripped stray ${HEARTBEAT_TOKEN} token from reply`);
           }
           if (stripped.shouldSkip && !reply.hasMedia) {
             return { skip: true };
