@@ -1,6 +1,6 @@
 import { createHmac, createHash } from "node:crypto";
 import type { ReasoningLevel, ThinkLevel } from "../auto-reply/thinking.js";
-import { SILENT_REPLY_TOKEN } from "../auto-reply/tokens.js";
+import { HEARTBEAT_TOKEN, SILENT_REPLY_TOKEN } from "../auto-reply/tokens.js";
 import { resolveChannelApprovalCapability } from "../channels/plugins/approvals.js";
 import { getChannelPlugin } from "../channels/plugins/index.js";
 import type { MemoryCitationsMode } from "../config/types.memory.js";
@@ -207,7 +207,7 @@ function buildMessagingSection(params: {
     "- Cross-session messaging → use sessions_send(sessionKey, message)",
     "- Sub-agent orchestration → use subagents(action=list|steer|kill)",
     `- Runtime-generated completion events may ask for a user update. Rewrite those in your normal assistant voice and send the update (do not forward raw internal metadata or default to ${SILENT_REPLY_TOKEN}).`,
-    "- Never use exec/curl for provider messaging; OpenClaw handles all routing internally.",
+    "- Never use exec/curl for provider messaging; the gateway handles all routing internally.",
     params.availableTools.has("message")
       ? [
           "",
@@ -248,13 +248,9 @@ function buildDocsSection(params: { docsPath?: string; isMinimal: boolean; readT
   }
   return [
     "## Documentation",
-    `OpenClaw docs: ${docsPath}`,
-    "Mirror: https://docs.openclaw.ai",
-    "Source: https://github.com/openclaw/openclaw",
-    "Community: https://discord.com/invite/clawd",
-    "Find new skills: https://clawhub.ai",
-    "For OpenClaw behavior, commands, config, or architecture: consult local docs first.",
-    "When diagnosing issues, run `openclaw status` yourself when possible; only ask the user if you lack access (e.g., sandboxed).",
+    `Docs: ${docsPath}`,
+    "For gateway behavior, commands, config, or architecture: consult local docs first.",
+    "When diagnosing issues, run `gateway status` yourself when possible; only ask the user if you lack access (e.g., sandboxed).",
     "",
   ];
 }
@@ -554,26 +550,26 @@ export function buildAgentSystemPrompt(params: {
       fallback: [],
     }),
     ...safetySection,
-    "## OpenClaw CLI Quick Reference",
-    "OpenClaw is controlled via subcommands. Do not invent commands.",
+    "## Gateway CLI Quick Reference",
+    "The gateway is controlled via subcommands. Do not invent commands.",
     "To manage the Gateway daemon service (start/stop/restart):",
-    "- openclaw gateway status",
-    "- openclaw gateway start",
-    "- openclaw gateway stop",
-    "- openclaw gateway restart",
-    "If unsure, ask the user to run `openclaw help` (or `openclaw gateway --help`) and paste the output.",
+    "- gateway status",
+    "- gateway start",
+    "- gateway stop",
+    "- gateway restart",
+    "If unsure, ask the user to run `gateway help` and paste the output.",
     "",
     ...skillsSection,
     ...memorySection,
     // Skip self-update for subagent/none modes
-    hasGateway && !isMinimal ? "## OpenClaw Self-Update" : "",
+    hasGateway && !isMinimal ? "## Self-Update" : "",
     hasGateway && !isMinimal
       ? [
           "Get Updates (self-update) is ONLY allowed when the user explicitly asks for it.",
           "Do not run config.apply or update.run unless the user explicitly requests an update or config change; if it's not explicit, ask first.",
           "Use config.schema.lookup with a specific dot path to inspect only the relevant config subtree before making config changes or answering config-field questions; avoid guessing field names/types.",
           "Actions: config.schema.lookup, config.get, config.apply (validate + write full config, then restart), config.patch (partial update, merges with existing), update.run (update deps or git, then restart).",
-          "After restart, OpenClaw pings the last active session automatically.",
+          "After restart, the gateway pings the last active session automatically.",
         ].join("\n")
       : "",
     hasGateway && !isMinimal ? "" : "",
@@ -647,7 +643,7 @@ export function buildAgentSystemPrompt(params: {
       userTimezone,
     }),
     "## Workspace Files (injected)",
-    "These user-editable files are loaded by OpenClaw and included below in Project Context.",
+    "These user-editable files are included below in Project Context.",
     "",
     ...buildReplyTagsSection(isMinimal),
     ...buildMessagingSection({
@@ -752,9 +748,9 @@ export function buildAgentSystemPrompt(params: {
       "## Heartbeats",
       `Heartbeat prompt: ${heartbeatPrompt}`,
       "If you receive a heartbeat poll (a user message matching the heartbeat prompt above), and there is nothing that needs attention, reply exactly:",
-      "HEARTBEAT_OK",
-      'OpenClaw treats a leading/trailing "HEARTBEAT_OK" as a heartbeat ack (and may discard it).',
-      'If something needs attention, do NOT include "HEARTBEAT_OK"; reply with the alert text instead.',
+      HEARTBEAT_TOKEN,
+      `A leading/trailing "${HEARTBEAT_TOKEN}" is treated as a heartbeat ack (and may be discarded).`,
+      `If something needs attention, do NOT include "${HEARTBEAT_TOKEN}"; reply with the alert text instead.`,
       "",
     );
   }
