@@ -1,7 +1,7 @@
 #!/usr/bin/env -S node --import tsx
 
 import { spawnSync, type SpawnSyncOptions } from "node:child_process";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, rmSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { formatErrorMessage } from "../src/infra/errors.ts";
 import { writePackageDistInventory } from "../src/infra/package-dist-inventory.ts";
@@ -121,6 +121,8 @@ async function writeDistInventory(): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  // Clean dist/ before rebuild to prevent stale-artifact (.d.ts) failures during pack.
+  rmSync("dist", { recursive: true, force: true });
   runPnpm(["build"]);
   runPnpm(["ui:build"]);
   ensurePreparedArtifacts();
