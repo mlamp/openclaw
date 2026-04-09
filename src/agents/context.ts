@@ -39,6 +39,7 @@ const ANTHROPIC_GA_1M_MODEL_PREFIXES = [
   "claude-sonnet-4.6",
 ] as const;
 export const ANTHROPIC_CONTEXT_1M_TOKENS = 1_048_576;
+let _primeConfigInProgress = false;
 const CONFIG_LOAD_RETRY_POLICY: BackoffPolicy = {
   initialMs: 1_000,
   maxMs: 60_000,
@@ -124,6 +125,13 @@ function primeConfiguredContextWindows(): OpenClawConfig | undefined {
   if (Date.now() < CONTEXT_WINDOW_RUNTIME_STATE.nextConfigLoadAttemptAtMs) {
     return undefined;
   }
+  // Guard against re-entrant loadConfig() calls. This can happen when module
+  // evaluation triggers bundled-channel loading which transitively imports this
+  // module while config is still being evaluated.
+  if (_primeConfigInProgress) {
+    return undefined;
+  }
+  _primeConfigInProgress = true;
   try {
     const cfg = getRuntimeConfig();
     applyConfiguredContextWindows({
@@ -143,6 +151,8 @@ function primeConfiguredContextWindows(): OpenClawConfig | undefined {
     CONTEXT_WINDOW_RUNTIME_STATE.nextConfigLoadAttemptAtMs = Date.now() + backoffMs;
     // If config can't be loaded, leave cache empty and retry after backoff.
     return undefined;
+  } finally {
+    _primeConfigInProgress = false;
   }
 }
 
