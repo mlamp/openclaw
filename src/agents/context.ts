@@ -40,6 +40,7 @@ type ModelEntry = {
   contextWindow?: number;
   contextTokens?: number;
 };
+let _primeConfigInProgress = false;
 const CONFIG_LOAD_RETRY_POLICY: BackoffPolicy = {
   initialMs: 1_000,
   maxMs: 60_000,
@@ -170,6 +171,13 @@ function primeConfiguredContextWindows(): OpenClawConfig | undefined {
   if (Date.now() < CONTEXT_WINDOW_RUNTIME_STATE.nextConfigLoadAttemptAtMs) {
     return undefined;
   }
+  // Guard against re-entrant loadConfig() calls. This can happen when module
+  // evaluation triggers bundled-channel loading which transitively imports this
+  // module while config is still being evaluated.
+  if (_primeConfigInProgress) {
+    return undefined;
+  }
+  _primeConfigInProgress = true;
   try {
     return primeConfiguredContextWindowsFromConfig(getRuntimeConfig());
   } catch {
@@ -181,6 +189,8 @@ function primeConfiguredContextWindows(): OpenClawConfig | undefined {
     CONTEXT_WINDOW_RUNTIME_STATE.nextConfigLoadAttemptAtMs = Date.now() + backoffMs;
     // If config can't be loaded, leave cache empty and retry after backoff.
     return undefined;
+  } finally {
+    _primeConfigInProgress = false;
   }
 }
 
