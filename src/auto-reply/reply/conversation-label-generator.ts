@@ -1,7 +1,9 @@
 // Generates short labels for sessions from conversation context.
+import { resolveAgentWorkspaceDir } from "../../agents/agent-scope.js";
+import { generateCliConversationLabel } from "../../agents/cli-summarizer.js";
 import { resolveModelAsync } from "../../agents/embedded-agent-runner/model.js";
 import { requireApiKey } from "../../agents/model-auth.js";
-import { resolveDefaultModelForAgent } from "../../agents/model-selection.js";
+import { isCliProvider, resolveDefaultModelForAgent } from "../../agents/model-selection.js";
 import { applyPreparedRuntimeAuthToModel } from "../../agents/provider-request-config.js";
 import { prepareModelForSimpleCompletion } from "../../agents/simple-completion-transport.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
@@ -53,6 +55,20 @@ export async function generateConversationLabel(
       ? Math.floor(params.maxLength)
       : DEFAULT_MAX_LABEL_LENGTH;
   const modelRef = resolveDefaultModelForAgent({ cfg, agentId });
+  if (isCliProvider(modelRef.provider, cfg)) {
+    const workspaceDir = resolveAgentWorkspaceDir(cfg, agentId ?? "");
+    return generateCliConversationLabel({
+      prompt,
+      userMessage,
+      provider: modelRef.provider,
+      model: modelRef.model,
+      config: cfg,
+      workspaceDir,
+      agentId,
+      maxLength,
+      timeoutMs: TIMEOUT_MS,
+    });
+  }
   const resolved = await resolveModelAsync(modelRef.provider, modelRef.model, agentDir, cfg);
   if (!resolved.model) {
     logVerbose(

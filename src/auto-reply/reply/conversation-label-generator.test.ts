@@ -22,8 +22,20 @@ vi.mock("../../agents/model-auth.js", () => ({ requireApiKey }));
 
 vi.mock("../../globals.js", () => ({ logVerbose }));
 
+const isCliProvider = vi.hoisted(() => vi.fn(() => false));
 vi.mock("../../agents/model-selection.js", () => ({
   resolveDefaultModelForAgent,
+  isCliProvider,
+}));
+
+const generateCliConversationLabel = vi.hoisted(() => vi.fn());
+vi.mock("../../agents/cli-summarizer.js", () => ({
+  generateCliConversationLabel,
+}));
+
+const resolveAgentWorkspaceDir = vi.hoisted(() => vi.fn(() => "/tmp/ws"));
+vi.mock("../../agents/agent-scope.js", () => ({
+  resolveAgentWorkspaceDir,
 }));
 
 vi.mock("../../agents/embedded-agent-runner/model.js", () => ({
@@ -57,6 +69,11 @@ describe("generateConversationLabel", () => {
     resolveDefaultModelForAgent.mockReset();
     resolveModelAsync.mockReset();
     prepareModelForSimpleCompletion.mockReset();
+    isCliProvider.mockReset();
+    isCliProvider.mockReturnValue(false);
+    generateCliConversationLabel.mockReset();
+    resolveAgentWorkspaceDir.mockReset();
+    resolveAgentWorkspaceDir.mockReturnValue("/tmp/ws");
 
     resolveDefaultModelForAgent.mockReturnValue({ provider: "openai", model: "gpt-test" });
     resolveModelAsync.mockResolvedValue({
@@ -74,6 +91,37 @@ describe("generateConversationLabel", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it("delegates to the CLI summarizer when the resolved provider is CLI-backed", async () => {
+    isCliProvider.mockReturnValue(true);
+    generateCliConversationLabel.mockResolvedValue("cli label");
+    resolveDefaultModelForAgent.mockReturnValue({
+      provider: "claude-cli",
+      model: "claude-opus-4-7",
+    });
+
+    const label = await generateConversationLabel({
+      userMessage: "Need help with invoices",
+      prompt: "prompt",
+      cfg: {},
+      agentId: "billing",
+      agentDir: "/tmp/agents/billing/agent",
+      maxLength: 32,
+    });
+
+    expect(label).toBe("cli label");
+    expect(generateCliConversationLabel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: "prompt",
+        userMessage: "Need help with invoices",
+        provider: "claude-cli",
+        model: "claude-opus-4-7",
+        agentId: "billing",
+        maxLength: 32,
+      }),
+    );
+    expect(completeSimple).not.toHaveBeenCalled();
   });
 
   it("uses routed agentDir for model and auth resolution", async () => {
