@@ -11,8 +11,9 @@ import {
   resolveAgentWorkspaceDir,
   resolveAgentDir,
 } from "../agents/agent-scope.js";
+import { runCliSummarizerOneShot } from "../agents/cli-summarizer.js";
 import { runEmbeddedAgent } from "../agents/embedded-agent.js";
-import { resolveDefaultModelForAgent } from "../agents/model-selection.js";
+import { isCliProvider, resolveDefaultModelForAgent } from "../agents/model-selection.js";
 import { resolveAgentTimeoutMs } from "../agents/timeout.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
@@ -97,6 +98,29 @@ Reply with ONLY the slug, nothing else. Examples: "vendor-pitch", "api-design", 
       agentId,
     });
     const timeoutMs = resolveSlugGeneratorTimeoutMs(params.cfg);
+
+    if (isCliProvider(provider, params.cfg)) {
+      const cliResult = await runCliSummarizerOneShot({
+        prompt,
+        provider,
+        model,
+        config: params.cfg,
+        workspaceDir,
+        agentId,
+        timeoutMs: 15_000,
+      });
+      const text = cliResult.text;
+      if (!text) {
+        return null;
+      }
+      const slug = text
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 30);
+      return slug || null;
+    }
 
     const result = await runEmbeddedAgent({
       sessionId: `slug-generator-${Date.now()}`,
