@@ -50,6 +50,7 @@ import {
   resolveChannelMessageToolHints,
   resolveChannelReactionGuidance,
 } from "../channel-tools.js";
+import { compactViaCliBackend } from "../cli-summarizer.js";
 import {
   hasMeaningfulConversationContent,
   isRealConversationMessage,
@@ -70,6 +71,7 @@ import {
   resolveModelAuthMode,
 } from "../model-auth.js";
 import { isFallbackSummaryError, runWithModelFallback } from "../model-fallback.js";
+import { isCliProvider } from "../model-selection.js";
 import { supportsModelTools } from "../model-tool-support.js";
 import { ensureOpenClawModelsJson } from "../models-config.js";
 import {
@@ -555,6 +557,21 @@ async function compactEmbeddedPiSessionDirectOnce(
         : undefined,
     };
   };
+  if (isCliProvider(provider, params.config)) {
+    return await compactViaCliBackend({
+      sessionId: params.sessionId,
+      sessionKey: params.sessionKey,
+      sessionFile: params.sessionFile,
+      workspaceDir: resolvedWorkspace,
+      config: params.config,
+      provider,
+      model: modelId,
+      authProfileId,
+      messageProvider: params.messageChannel ?? params.messageProvider,
+      diagId,
+      extraSystemPrompt: params.extraSystemPrompt,
+    });
+  }
   const agentDir =
     params.agentDir ?? resolveAgentDir(params.config ?? {}, earlyAgentIds.sessionAgentId);
   await ensureOpenClawModelsJson(params.config, agentDir, {
