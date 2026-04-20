@@ -7,6 +7,7 @@ import {
   normalizeOptionalString,
 } from "@openclaw/normalization-core/string-coerce";
 import { resolveBootstrapWarningSignaturesSeen } from "../../agents/bootstrap-budget.js";
+import { runCliMemoryFlush } from "../../agents/cli-summarizer.js";
 import { estimateMessagesTokens } from "../../agents/compaction.js";
 import { classifyCompactionReason } from "../../agents/embedded-agent-runner/compact-reasons.js";
 import { resolveAgentHarnessPolicy } from "../../agents/harness/policy.js";
@@ -731,7 +732,7 @@ export async function runPreflightCompactionIfNeeded(params: {
     followupRun: params.followupRun,
     sessionEntry: entry,
   });
-  if (params.isHeartbeat || isCli) {
+  if (params.isHeartbeat) {
     return entry ?? params.sessionEntry;
   }
   if (
@@ -1055,7 +1056,7 @@ export async function runMemoryFlushIfNeeded(params: {
     followupRun: params.followupRun,
     sessionEntry: entry,
   });
-  const canAttemptFlush = memoryFlushWritable && !params.isHeartbeat && !isCli;
+  const canAttemptFlush = memoryFlushWritable && !params.isHeartbeat;
   const contextWindowTokens = resolveMemoryFlushContextWindowTokens({
     cfg: params.cfg,
     provider: resolveFollowupContextConfigProvider({
@@ -1207,7 +1208,6 @@ export async function runMemoryFlushIfNeeded(params: {
   const shouldFlushMemory =
     (memoryFlushWritable &&
       !params.isHeartbeat &&
-      !isCli &&
       shouldRunMemoryFlush({
         entry,
         tokenCount: tokenCountForFlush,
@@ -1293,6 +1293,29 @@ export async function runMemoryFlushIfNeeded(params: {
         });
       },
       run: async (provider, model, runOptions) => {
+        if (isCliProvider(provider, params.cfg)) {
+          const result = await runCliMemoryFlush({
+            sessionId: params.followupRun.run.sessionId,
+            sessionKey: params.followupRun.run.sessionKey ?? params.sessionKey,
+            sessionEntry: activeSessionEntry,
+            sessionFile: params.followupRun.run.sessionFile,
+            workspaceDir: params.followupRun.run.workspaceDir,
+            config: params.cfg,
+            provider,
+            model,
+            authProfileId: params.followupRun.run.authProfileId,
+            storePath: params.storePath,
+            flushPrompt: activeMemoryFlushPlan.prompt,
+            flushSystemPrompt,
+            memoryFlushWritePath,
+            agentId: params.followupRun.run.agentId,
+          });
+          memoryCompactionCompleted = true;
+          if (result.meta?.agentMeta?.sessionId) {
+            postCompactionSessionId = result.meta.agentMeta.sessionId;
+          }
+          return result;
+        }
         const { embeddedContext, senderContext, runBaseParams } = buildEmbeddedRunExecutionParams({
           run: params.followupRun.run,
           sessionCtx: params.sessionCtx,
