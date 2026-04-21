@@ -20,6 +20,14 @@ const silentExactRegexByToken = new Map<string, RegExp>();
 const silentTrailingRegexByToken = new Map<string, RegExp>();
 const silentLeadingAttachedRegexByToken = new Map<string, RegExp>();
 
+// Safety net for agents that hallucinate a `[[...]]`-shaped silence marker by
+// pattern-analogy against the real directive tags (`[[reply_to_current]]`,
+// `[[audio_as_voice]]`). The documented silence signal is `NO_REPLY`, but some
+// models still emit `[[silence]]` / `[[no_reply]]` / `[[quiet]]`; without this
+// match those leak verbatim to channels like Telegram.
+const SILENT_HALLUCINATION_RE =
+  /^\s*\[\[\s*(?:silence|no[_-]?reply|quiet|stay[_-\s]+silent|silent)\s*\]\]\s*$/i;
+
 function getSilentExactRegex(token: string): RegExp {
   const cached = silentExactRegexByToken.get(token);
   if (cached) {
@@ -65,9 +73,13 @@ export function isSilentReplyText(
   // This prevents substantive replies ending with NO_REPLY from being suppressed (#19537).
   // Models sometimes wrap the token in punctuation. Preserve exact custom-token matching,
   // but keep symbols such as emoji substantive so they are still delivered.
+  // Also treat bracketed hallucinations (`[[silence]]` etc.) as silence so they do
+  // not leak into outbound channels; anchored to the full message so wiki-link content
+  // embedded in substantive replies (e.g. `see [[Page Name]]`) is unaffected.
   return (
     getSilentExactRegex(token).test(text) ||
-    getSilentExactRegex(token).test(stripEdgePunctuation(text.trim()))
+    getSilentExactRegex(token).test(stripEdgePunctuation(text.trim())) ||
+    SILENT_HALLUCINATION_RE.test(text)
   );
 }
 
