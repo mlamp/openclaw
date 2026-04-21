@@ -99,6 +99,28 @@ describe("isSilentReplyPayloadText", () => {
       ),
     ).toBe(false);
   });
+
+  it("treats bracketed silence hallucinations as silent so they do not leak", () => {
+    // Agents occasionally invent a `[[silence]]`-style marker by pattern-analogy
+    // against the real directive tags. Treat these as silent equivalents so the
+    // raw bracketed token does not leak to outbound channels.
+    expect(isSilentReplyText("[[silence]]")).toBe(true);
+    expect(isSilentReplyText("  [[ silence ]]  ")).toBe(true);
+    expect(isSilentReplyText("[[SILENCE]]")).toBe(true);
+    expect(isSilentReplyText("[[no_reply]]")).toBe(true);
+    expect(isSilentReplyText("[[no-reply]]")).toBe(true);
+    expect(isSilentReplyText("[[quiet]]")).toBe(true);
+    expect(isSilentReplyText("[[stay silent]]")).toBe(true);
+    expect(isSilentReplyText("[[silent]]")).toBe(true);
+  });
+
+  it("does not treat wiki-link content inside substantive replies as silent", () => {
+    // Anchored match keeps real assistant content containing `[[...]]` intact.
+    expect(isSilentReplyText("see [[Page Name]] for details")).toBe(false);
+    expect(isSilentReplyText("[[silence]] but here is more")).toBe(false);
+    expect(isSilentReplyText("here is context [[silence]]")).toBe(false);
+    expect(isSilentReplyText("[[other_tag]]")).toBe(false);
+  });
 });
 
 describe("stripSilentToken", () => {
