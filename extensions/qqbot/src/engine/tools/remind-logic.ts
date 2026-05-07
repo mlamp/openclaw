@@ -182,7 +182,7 @@ export function generateJobName(content: string): string {
 export function buildReminderPrompt(content: string): string {
   return (
     `You are a warm reminder assistant. Please remind the user about: ${content}. ` +
-    `Requirements: (1) do not reply with HEARTBEAT_OK (2) do not explain who you are ` +
+    `Requirements: (1) do not reply with the heartbeat acknowledgment token (2) do not explain who you are ` +
     `(3) output a direct and caring reminder message (4) you may add a short encouraging line ` +
     `(5) keep it within 2-3 sentences (6) use a small amount of emoji.`
   );

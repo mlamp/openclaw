@@ -2,7 +2,7 @@
 import { escapeRegExp } from "../shared/regexp.js";
 
 /** Token that marks a heartbeat response as an acknowledgement with no user notification. */
-export const HEARTBEAT_TOKEN = "HEARTBEAT_OK";
+export const HEARTBEAT_TOKEN = "PULSE_ACK";
 /** Token that marks an auto-reply response as intentionally silent. */
 export const SILENT_REPLY_TOKEN = "NO_REPLY";
 
