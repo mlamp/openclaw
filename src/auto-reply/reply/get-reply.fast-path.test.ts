@@ -360,7 +360,7 @@ describe("getReplyFromConfig fast test bootstrap", () => {
         updatedAt: Date.now(),
         pendingFinalDelivery: {
           kind: "replayable",
-          text: "HEARTBEAT_OK",
+          text: "PULSE_ACK",
           createdAt: 1,
           intentId: "stale-heartbeat-intent",
         },
@@ -394,7 +394,7 @@ describe("getReplyFromConfig fast test bootstrap", () => {
         updatedAt: Date.now(),
         pendingFinalDelivery: {
           kind: "replayable",
-          text: "HEARTBEAT_OK short",
+          text: "PULSE_ACK short",
           createdAt: 1,
         },
       },

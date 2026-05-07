@@ -240,7 +240,7 @@ describe("heartbeat runner skips when target session lane is busy", () => {
           },
         ],
       });
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       const result = await runHeartbeat(cfg, replySpy, { intent: "manual" });
 
@@ -282,7 +282,7 @@ describe("heartbeat runner skips when target session lane is busy", () => {
           },
         ],
       });
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       const result = await runHeartbeat(cfg, replySpy, { intent: "scheduled" });
 
@@ -308,7 +308,7 @@ describe("heartbeat runner skips when target session lane is busy", () => {
     await withTempHeartbeatSandbox(async ({ storePath, replySpy }) => {
       const cfg = createHeartbeatTelegramConfig(storePath);
       await seedHeartbeatTelegramSession(storePath, cfg);
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
       const releaseOwners = markHeartbeatWaitOwners("report-a", "report-b");
 
       try {
@@ -449,7 +449,7 @@ describe("heartbeat runner skips when target session lane is busy", () => {
       const cfg = createHeartbeatTelegramConfig(storePath);
       await seedHeartbeatTelegramSession(storePath, cfg);
       const listActiveReplyRunSessionKeys = vi.fn(() => ["legacy-session-key"]);
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       const result = await runHeartbeat(cfg, replySpy, {}, { listActiveReplyRunSessionKeys });
 
@@ -466,7 +466,7 @@ describe("heartbeat runner skips when target session lane is busy", () => {
       const listActiveReplyRunSessionKeys = vi.fn(() => [
         "agent:main:telegram:group:-1003966283270:topic:547",
       ]);
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       const result = await runHeartbeat(
         cfg,
@@ -639,11 +639,11 @@ describe("heartbeat runner skips when target session lane is busy", () => {
         updatedAt: Date.now(),
         pendingFinalDelivery: {
           kind: "replayable",
-          text: "HEARTBEAT_OK",
+          text: "PULSE_ACK",
           createdAt: Date.now(),
         },
       });
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       const result = await runHeartbeat(cfg, replySpy);
 
@@ -663,11 +663,11 @@ describe("heartbeat runner skips when target session lane is busy", () => {
         updatedAt: Date.now(),
         pendingFinalDelivery: {
           kind: "replayable",
-          text: "HEARTBEAT_OK short",
+          text: "PULSE_ACK short",
           createdAt: Date.now(),
         },
       });
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       const result = await runHeartbeat(cfg, replySpy);
 
@@ -693,7 +693,7 @@ describe("heartbeat runner skips when target session lane is busy", () => {
           createdAt: Date.now() - 60_000,
         },
       });
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
       const sendTelegram = vi.fn().mockResolvedValue({ messageId: "m1", chatId: "default" });
 
       const result = await runHeartbeat(cfg, replySpy, {}, { telegram: sendTelegram });
@@ -716,7 +716,7 @@ describe("heartbeat runner skips when target session lane is busy", () => {
       const getQueueSize = vi.fn((_lane?: string) => 0);
 
       replySpy.mockResolvedValue({
-        text: "HEARTBEAT_OK",
+        text: "PULSE_ACK",
       });
 
       const result = await runHeartbeat(cfg, replySpy, {}, { getQueueSize });

@@ -150,7 +150,7 @@ function stripTokenAtEdges(raw: string): { text: string; didStrip: boolean } {
   return { text: collapsed, didStrip };
 }
 
-/** Strips HEARTBEAT_OK acknowledgements and decides whether visible notification is needed. */
+/** Strips PULSE_ACK acknowledgements and decides whether visible notification is needed. */
 export function stripHeartbeatToken(
   raw?: string,
   opts: { mode?: StripHeartbeatMode; maxAckChars?: number } = {},
@@ -178,8 +178,8 @@ export function stripHeartbeatToken(
       : DEFAULT_HEARTBEAT_ACK_MAX_CHARS,
   );
 
-  // Normalize lightweight markup so HEARTBEAT_OK wrapped in HTML/Markdown
-  // (e.g., <b>HEARTBEAT_OK</b> or **HEARTBEAT_OK**) still strips.
+  // Normalize lightweight markup so PULSE_ACK wrapped in HTML/Markdown
+  // (e.g., <b>PULSE_ACK</b> or **PULSE_ACK**) still strips.
   const stripMarkup = (text: string) =>
     text
       // Drop HTML tags.

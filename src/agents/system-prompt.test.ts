@@ -434,7 +434,7 @@ describe("buildAgentSystemPrompt", () => {
     });
 
     expect(prompt).not.toContain("## Heartbeats");
-    expect(prompt).not.toContain("HEARTBEAT_OK");
+    expect(prompt).not.toContain("PULSE_ACK");
     expect(prompt).not.toContain("Read HEARTBEAT.md");
   });
 
@@ -1500,10 +1500,10 @@ describe("buildAgentSystemPrompt", () => {
 
   it("removes shipped heartbeat prompt quotes from workspace context without dropping user guidance", () => {
     const heartbeatPrompts = [
-      "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply HEARTBEAT_OK.",
-      "Follow the heartbeat monitor scratch context when provided. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply HEARTBEAT_OK.",
-      "Follow the heartbeat monitor scratch context when provided. Recurring tasks are cron jobs; create or change their schedules with cron tools or the openclaw cron CLI, not heartbeat scratch. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply HEARTBEAT_OK.",
-      "Follow the heartbeat monitor scratch context when provided. Recurring tasks are automations; create or change their schedules with the automations tool, not heartbeat scratch. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply HEARTBEAT_OK.",
+      "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply PULSE_ACK.",
+      "Follow the heartbeat monitor scratch context when provided. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply PULSE_ACK.",
+      "Follow the heartbeat monitor scratch context when provided. Recurring tasks are cron jobs; create or change their schedules with cron tools or the openclaw cron CLI, not heartbeat scratch. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply PULSE_ACK.",
+      "Follow the heartbeat monitor scratch context when provided. Recurring tasks are automations; create or change their schedules with the automations tool, not heartbeat scratch. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply PULSE_ACK.",
     ];
 
     for (const heartbeatPrompt of heartbeatPrompts) {
@@ -1521,7 +1521,7 @@ describe("buildAgentSystemPrompt", () => {
         expect(prompt).toContain("Keep this user guidance.");
         expect(prompt).toContain("Keep this too.");
         expect(prompt).not.toContain("## Heartbeats");
-        expect(prompt).not.toContain("HEARTBEAT_OK");
+        expect(prompt).not.toContain("PULSE_ACK");
         expect(prompt).not.toContain("HEARTBEAT.md");
         expect(prompt).not.toContain(heartbeatPrompt);
         expect(prompt).not.toContain("Default heartbeat prompt:");
@@ -1531,7 +1531,7 @@ describe("buildAgentSystemPrompt", () => {
 
   it("preserves custom quoted workspace instructions that are not default heartbeat prompts", () => {
     const customPrompt =
-      "Default heartbeat prompt:\n`Review only the incident queue. If nothing needs attention, reply HEARTBEAT_OK.`";
+      "Default heartbeat prompt:\n`Review only the incident queue. If nothing needs attention, reply PULSE_ACK.`";
     const prompt = buildAgentSystemPrompt({
       workspaceDir: "/tmp/openclaw",
       contextFiles: [{ path: "AGENTS.md", content: customPrompt }],

@@ -831,7 +831,7 @@ describe("SessionHistorySseState", () => {
           role: "assistant",
           content: [
             { type: "reasoning", text: "Checking the heartbeat." },
-            { type: "text", text: "HEARTBEAT_OK" },
+            { type: "text", text: "PULSE_ACK" },
           ],
           __openclaw: { seq: 2 },
         },
@@ -863,7 +863,7 @@ describe("SessionHistorySseState", () => {
       },
     ]);
 
-    expect(appendAssistantText(state, "HEARTBEAT_OK", 3)).toBeNull();
+    expect(appendAssistantText(state, "PULSE_ACK", 3)).toBeNull();
 
     const compaction = state.appendInlineMessage({
       message: {
@@ -892,7 +892,7 @@ describe("SessionHistorySseState", () => {
         },
       }),
     ).toBeNull();
-    expect(appendAssistantText(state, "HEARTBEAT_OK")).toBeNull();
+    expect(appendAssistantText(state, "PULSE_ACK")).toBeNull();
     expect(
       state.appendInlineMessage({
         message: {

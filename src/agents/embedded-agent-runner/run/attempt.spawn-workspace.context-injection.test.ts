@@ -220,7 +220,7 @@ describe("embedded attempt context injection", () => {
         role: "assistant",
         content: [
           { type: "reasoning", text: "Checking the heartbeat." },
-          { type: "text", text: "HEARTBEAT_OK" },
+          { type: "text", text: "PULSE_ACK" },
         ],
         timestamp: 4,
       } as unknown as AgentMessage,

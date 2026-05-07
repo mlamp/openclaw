@@ -346,14 +346,14 @@ describe("SidebarSessionNarrationController", () => {
         runId: "run-1",
         stream: "assistant",
         data: {
-          text: `${"Visible progress continues. ".repeat(16)}Final visible status. HEARTBEAT_OK`,
+          text: `${"Visible progress continues. ".repeat(16)}Final visible status. PULSE_ACK`,
         },
       }),
     );
 
     const line = updates.at(-1)?.get("agent:main:run");
     expect(line).toBe("Final visible status.");
-    expect(line).not.toContain("HEARTBEAT_OK");
+    expect(line).not.toContain("PULSE_ACK");
   });
 
   it("keeps a truncated internal block hidden until its closing delimiter arrives", async () => {
@@ -695,7 +695,7 @@ describe("SidebarSessionNarrationController", () => {
         sessionKey: "agent:main:run",
         runId: "run-1",
         stream: "assistant",
-        data: { replace: true, text: "HEARTBEAT_OK" },
+        data: { replace: true, text: "PULSE_ACK" },
       }),
     );
     controller.handleEvent(

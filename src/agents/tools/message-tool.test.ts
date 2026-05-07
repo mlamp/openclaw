@@ -2883,7 +2883,7 @@ describe("message tool explicit target guard", () => {
           tool.execute(toolCallId, {
             action: "send",
             target: "telegram:dm-user-1",
-            message: "HEARTBEAT_OK",
+            message: "PULSE_ACK",
           }),
         ),
       ).rejects.toThrow(/Explicit message target required/i);

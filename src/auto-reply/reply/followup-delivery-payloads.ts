@@ -62,7 +62,7 @@ export function resolveFollowupDeliveryPayloads(params: {
   for (const payload of deliverablePayloads) {
     const text = payload.text;
     const sanitized =
-      text?.includes("HEARTBEAT_OK") === true
+      text?.includes("PULSE_ACK") === true
         ? copyReplyPayloadMetadata(payload, {
             ...payload,
             text: stripHeartbeatToken(text, { mode: "message" }).text,

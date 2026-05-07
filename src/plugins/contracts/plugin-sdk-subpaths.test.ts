@@ -1465,9 +1465,7 @@ describe("plugin-sdk subpath exports", () => {
 
     expect(replyChunkingSdk.isSilentReplyText("NO_REPLY\n\nNO_REPLY")).toBe(true);
     expect(replyChunkingSdk.isSilentReplyPayloadText("NO_REPLY\n\nNO_REPLY")).toBe(true);
-    expect(replyChunkingSdk.isSilentReplyText("HEARTBEAT_OK\nHEARTBEAT_OK", "HEARTBEAT_OK")).toBe(
-      true,
-    );
+    expect(replyChunkingSdk.isSilentReplyText("PULSE_ACK\nPULSE_ACK", "PULSE_ACK")).toBe(true);
     expect(replyChunkingSdk.isSilentReplyText("Visible update\n\nNO_REPLY")).toBe(false);
   });
 });

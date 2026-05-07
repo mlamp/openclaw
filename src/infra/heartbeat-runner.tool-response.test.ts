@@ -284,7 +284,7 @@ describe("runHeartbeatOnce heartbeat response tool", () => {
       expect(result.calledCtx.Body).toContain(text);
     }
     expect(result.calledCtx.Body).toContain("heartbeat_respond");
-    expect(result.calledCtx.Body).not.toContain("HEARTBEAT_OK");
+    expect(result.calledCtx.Body).not.toContain("PULSE_ACK");
     expect(result.calledOpts.enableHeartbeatTool).toBe(true);
     expect(result.calledOpts.forceHeartbeatTool).toBe(true);
     expect(result.calledOpts.sourceReplyDeliveryMode).toBe("message_tool_only");
@@ -742,7 +742,7 @@ describe("runHeartbeatOnce heartbeat response tool", () => {
       const cfg = createConfig({ tmpDir, storePath, ...policy });
       await seedTelegramSession(storePath, cfg, { chatType: policy.chatType });
       replySpy.mockResolvedValue({
-        text: "Private heartbeat reasoning with HEARTBEAT_OK inside the sentence.",
+        text: "Private heartbeat reasoning with PULSE_ACK inside the sentence.",
       });
       const sendTelegram = vi.fn().mockResolvedValue({ messageId: "m1" });
 

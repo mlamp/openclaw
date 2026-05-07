@@ -727,7 +727,7 @@ describe("grouped chat rendering", () => {
     renderAssistantMessageEntries(container, [
       {
         key: "assistant-heartbeat",
-        message: createAssistantMessage([{ type: "text", text: "HEARTBEAT_OK" }], {
+        message: createAssistantMessage([{ type: "text", text: "PULSE_ACK" }], {
           timestamp: 1,
         }),
         duplicateCount: 4,

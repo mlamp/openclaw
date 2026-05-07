@@ -271,7 +271,7 @@ describe("runHeartbeatOnce ack handling", () => {
         lastTo: WHATSAPP_GROUP,
       });
 
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK 🦞" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK 🦞" });
       const sendWhatsApp = createMessageSendSpy();
 
       await runHeartbeatOnce({
@@ -286,8 +286,8 @@ describe("runHeartbeatOnce ack handling", () => {
     });
   });
 
-  it.each(["HEARTBEAT_OK", "NO_REPLY"])(
-    "sends HEARTBEAT_OK for %s when visibility.showOk is true",
+  it.each(["PULSE_ACK", "NO_REPLY"])(
+    "sends PULSE_ACK for %s when visibility.showOk is true",
     async (replyText) => {
       await withTempHeartbeatSandbox(async ({ tmpDir, storePath, replySpy }) => {
         const cfg = createWhatsAppHeartbeatConfig({
@@ -315,14 +315,14 @@ describe("runHeartbeatOnce ack handling", () => {
 
         expectWhatsAppMessageSend(sendWhatsApp, {
           to: WHATSAPP_GROUP,
-          text: "HEARTBEAT_OK",
+          text: "PULSE_ACK",
           cfg,
         });
       });
     },
   );
 
-  it("reports a hook-suppressed HEARTBEAT_OK as silent", async () => {
+  it("reports a hook-suppressed PULSE_ACK as silent", async () => {
     await withTempHeartbeatSandbox(async ({ tmpDir, storePath, replySpy }) => {
       const registry = getActivePluginRegistry();
       if (!registry) {
@@ -346,7 +346,7 @@ describe("runHeartbeatOnce ack handling", () => {
           lastProvider: "whatsapp",
           lastTo: WHATSAPP_GROUP,
         });
-        replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+        replySpy.mockResolvedValue({ text: "PULSE_ACK" });
         const sendWhatsApp = createMessageSendSpy();
 
         expect(
@@ -368,7 +368,7 @@ describe("runHeartbeatOnce ack handling", () => {
     });
   });
 
-  it("does not recreate legacy task timestamps when HEARTBEAT_OK delivery fails", async () => {
+  it("does not recreate legacy task timestamps when PULSE_ACK delivery fails", async () => {
     await withTempTelegramHeartbeatSandbox(async ({ tmpDir, storePath, replySpy }) => {
       const nowMs = Date.parse("2026-07-06T12:00:00.000Z");
       await seedHeartbeatScratchForTest({
@@ -395,7 +395,7 @@ describe("runHeartbeatOnce ack handling", () => {
         lastProvider: "telegram",
         lastTo: TELEGRAM_GROUP,
       });
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
       const sendTelegram = vi.fn().mockRejectedValue(new Error("delivery unavailable"));
 
       const result = await runHeartbeatOnce({
@@ -436,7 +436,7 @@ describe("runHeartbeatOnce ack handling", () => {
         lastProvider: "whatsapp",
         lastTo: WHATSAPP_GROUP,
       });
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
       const sendWhatsApp = createMessageSendSpy();
 
       const result = await runHeartbeatOnce({
@@ -464,13 +464,13 @@ describe("runHeartbeatOnce ack handling", () => {
 
   it.each([
     {
-      title: "does not deliver HEARTBEAT_OK to telegram when showOk is false",
-      replyText: "HEARTBEAT_OK",
+      title: "does not deliver PULSE_ACK to telegram when showOk is false",
+      replyText: "PULSE_ACK",
       expectedCalls: 0,
     },
     {
-      title: "strips responsePrefix before HEARTBEAT_OK detection and suppresses short ack text",
-      replyText: "[openclaw] HEARTBEAT_OK all good",
+      title: "strips responsePrefix before PULSE_ACK detection and suppresses short ack text",
+      replyText: "[openclaw] PULSE_ACK all good",
       responsePrefix: "[openclaw]",
       expectedCalls: 0,
     },
@@ -532,14 +532,14 @@ describe("runHeartbeatOnce ack handling", () => {
     });
   });
 
-  it("skips delivery for markup-wrapped HEARTBEAT_OK", async () => {
+  it("skips delivery for markup-wrapped PULSE_ACK", async () => {
     await withTempHeartbeatSandbox(async ({ tmpDir, storePath, replySpy }) => {
       const cfg = await createSeededWhatsAppHeartbeatConfig({
         tmpDir,
         storePath,
       });
 
-      replySpy.mockResolvedValue({ text: "<b>HEARTBEAT_OK</b>" });
+      replySpy.mockResolvedValue({ text: "<b>PULSE_ACK</b>" });
       const sendWhatsApp = createMessageSendSpy();
 
       await runHeartbeatOnce({
@@ -554,7 +554,7 @@ describe("runHeartbeatOnce ack handling", () => {
     });
   });
 
-  it.each(["HEARTBEAT_OK", "NO_REPLY"])(
+  it.each(["PULSE_ACK", "NO_REPLY"])(
     "keeps relayable exec reply %s silent and consumes the event",
     async (replyText) => {
       await withTempHeartbeatSandbox(async ({ tmpDir, storePath, replySpy }) => {
@@ -574,10 +574,7 @@ describe("runHeartbeatOnce ack handling", () => {
 
   it.each([
     ["Command completed: uploaded report.txt", "Command completed: uploaded report.txt"],
-    [
-      "Command completed: uploaded report.txt\nHEARTBEAT_OK",
-      "Command completed: uploaded report.txt",
-    ],
+    ["Command completed: uploaded report.txt\nPULSE_ACK", "Command completed: uploaded report.txt"],
   ])("delivers one relayable exec summary from %j", async (replyText, expectedText) => {
     await withTempHeartbeatSandbox(async ({ tmpDir, storePath, replySpy }) => {
       const { cfg, sendWhatsApp } = await runRelayableExecHeartbeat({
@@ -602,7 +599,7 @@ describe("runHeartbeatOnce ack handling", () => {
         storePath,
         replySpy,
         reply: {
-          text: "HEARTBEAT_OK",
+          text: "PULSE_ACK",
           mediaUrl: "https://example.test/report.png",
           presentation: {
             blocks: [{ type: "text", text: "Report uploaded." }],

@@ -1744,13 +1744,13 @@ describe("memory-core dreaming phases", () => {
           role: "user",
           timestamp: "2026-04-16T18:04:00.000Z",
           content:
-            "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply HEARTBEAT_OK.",
+            "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply PULSE_ACK.",
           provenance: { kind: "internal_system", sourceTool: "heartbeat" },
         },
         {
           role: "assistant",
           timestamp: "2026-04-16T18:05:00.000Z",
-          content: "HEARTBEAT_OK",
+          content: "PULSE_ACK",
         },
         {
           role: "user",
@@ -1802,7 +1802,7 @@ describe("memory-core dreaming phases", () => {
     expect(corpus).not.toContain("Run the nightly sync");
     expect(corpus).not.toContain("Checkpoint chatter should stay out.");
     expect(corpus).not.toContain("Read HEARTBEAT.md");
-    expect(corpus).not.toContain("HEARTBEAT_OK");
+    expect(corpus).not.toContain("PULSE_ACK");
     expect(corpus).not.toContain("Run the memory sync");
   });
 

@@ -831,7 +831,7 @@ describe("buildChildCompletionFindings", () => {
     },
   );
 
-  it.each(["ANNOUNCE_SKIP", "REPLY_SKIP", "HEARTBEAT_OK"])(
+  it.each(["ANNOUNCE_SKIP", "REPLY_SKIP", "PULSE_ACK"])(
     "does not override an intentional %s completion with fallback output",
     (resultText) => {
       const findings = buildChildCompletionFindings([

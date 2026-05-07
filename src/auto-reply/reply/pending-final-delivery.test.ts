@@ -83,7 +83,7 @@ describe("sanitizePendingFinalDeliveryText", () => {
     expect(sanitizePendingFinalDeliveryText("NO_REPLYThe user is saying hello")).toBe(
       "The user is saying hello",
     );
-    expect(sanitizePendingFinalDeliveryText("HEARTBEAT_OK NO_REPLY")).toBe("HEARTBEAT_OK");
+    expect(sanitizePendingFinalDeliveryText("PULSE_ACK NO_REPLY")).toBe("PULSE_ACK");
   });
 
   it.each([
@@ -129,7 +129,7 @@ describe("sanitizePendingFinalDeliveryText", () => {
   });
 
   it("preserves heartbeat ack text for ack-aware classification", () => {
-    expect(sanitizePendingFinalDeliveryText("HEARTBEAT_OK short")).toBe("HEARTBEAT_OK short");
+    expect(sanitizePendingFinalDeliveryText("PULSE_ACK short")).toBe("PULSE_ACK short");
   });
 });
 

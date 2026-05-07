@@ -988,7 +988,7 @@ describe("runHeartbeatOnce", () => {
       sessionId: "sid-no-route-tasks",
       updatedAt: Date.now(),
     });
-    const replySpy = vi.fn().mockResolvedValue({ text: "HEARTBEAT_OK" });
+    const replySpy = vi.fn().mockResolvedValue({ text: "PULSE_ACK" });
 
     const result = await runHeartbeatOnce({
       cfg,
@@ -1017,7 +1017,7 @@ describe("runHeartbeatOnce", () => {
       sessionKey,
       contextKey: "cron:route-later",
     });
-    const replySpy = vi.fn().mockResolvedValue({ text: "HEARTBEAT_OK" });
+    const replySpy = vi.fn().mockResolvedValue({ text: "PULSE_ACK" });
 
     const result = await runHeartbeatOnce({
       cfg,
@@ -1635,9 +1635,9 @@ describe("runHeartbeatOnce", () => {
         expectedTexts: ["Final alert"],
       },
       {
-        name: "raw flagged reasoning + HEARTBEAT_OK",
+        name: "raw flagged reasoning + PULSE_ACK",
         caseDir: "hb-reasoning-heartbeat-ok",
-        replies: [{ text: "Because it helps", isReasoning: true }, { text: "HEARTBEAT_OK" }],
+        replies: [{ text: "Because it helps", isReasoning: true }, { text: "PULSE_ACK" }],
         expectedTexts: [],
       },
       {

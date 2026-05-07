@@ -7,18 +7,18 @@ import {
 describe("heartbeat display", () => {
   it.each([
     { raw: "", shouldSkip: true, text: "" },
-    { raw: "<b>HEARTBEAT_OK</b>", shouldSkip: true, text: "" },
-    { raw: "**HEARTBEAT_OK**", shouldSkip: true, text: "" },
-    { raw: "`HEARTBEAT_OK`", shouldSkip: true, text: "" },
-    { raw: "~~HEARTBEAT_OK~~", shouldSkip: true, text: "" },
-    { raw: "HEARTBEAT_OK All clear", shouldSkip: true, text: "All clear" },
-    { raw: "All clear HEARTBEAT_OK!!!", shouldSkip: true, text: "All clear!!!" },
+    { raw: "<b>PULSE_ACK</b>", shouldSkip: true, text: "" },
+    { raw: "**PULSE_ACK**", shouldSkip: true, text: "" },
+    { raw: "`PULSE_ACK`", shouldSkip: true, text: "" },
+    { raw: "~~PULSE_ACK~~", shouldSkip: true, text: "" },
+    { raw: "PULSE_ACK All clear", shouldSkip: true, text: "All clear" },
+    { raw: "All clear PULSE_ACK!!!", shouldSkip: true, text: "All clear!!!" },
     { raw: "NO_REPLY", shouldSkip: false, text: "NO_REPLY" },
     { raw: "Keep <visible> text", shouldSkip: false, text: "Keep <visible> text" },
     {
-      raw: "Keep HEARTBEAT_OK inside visible text",
+      raw: "Keep PULSE_ACK inside visible text",
       shouldSkip: false,
-      text: "Keep HEARTBEAT_OK inside visible text",
+      text: "Keep PULSE_ACK inside visible text",
     },
   ])("preserves visible text and suppression for $raw", ({ raw, shouldSkip, text }) => {
     expect(stripHeartbeatTokenForDisplay(raw)).toEqual({ shouldSkip, text });
@@ -31,7 +31,7 @@ describe("heartbeat display", () => {
     "applies the heartbeat acknowledgement limit at $length characters",
     ({ length, shouldSkip }) => {
       const text = "x".repeat(length);
-      expect(stripHeartbeatTokenForDisplay(`${text} HEARTBEAT_OK`)).toEqual({ shouldSkip, text });
+      expect(stripHeartbeatTokenForDisplay(`${text} PULSE_ACK`)).toEqual({ shouldSkip, text });
     },
   );
 
@@ -53,14 +53,14 @@ describe("heartbeat display", () => {
         role: "assistant",
         content: [
           { type: "thinking", thinking: "Checking scheduled work." },
-          { type: "text", text: "HEARTBEAT_OK" },
+          { type: "text", text: "PULSE_ACK" },
         ],
       }),
     ).toBe(true);
     expect(
       isAssistantHeartbeatAckForDisplay({
         role: "assistant",
-        content: [{ type: "text", text: "HEARTBEAT_OK" }, { type: "image" }],
+        content: [{ type: "text", text: "PULSE_ACK" }, { type: "image" }],
       }),
     ).toBe(false);
     expect(isAssistantHeartbeatAckForDisplay({ role: "assistant", content: "NO_REPLY" })).toBe(

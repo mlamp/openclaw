@@ -3529,12 +3529,12 @@ describe("buildCachedChatItems", () => {
     expect(groupAt(groups, 1).messages).toHaveLength(1);
   });
 
-  it("suppresses assistant HEARTBEAT_OK acknowledgements before rendering history", () => {
+  it("suppresses assistant PULSE_ACK acknowledgements before rendering history", () => {
     const groups = messageGroups({
       messages: [
-        assistantMessage([{ type: "text", text: "HEARTBEAT_OK" }], 1),
-        assistantMessage("HEARTBEAT_OK", 2),
-        userMessage([{ type: "text", text: "HEARTBEAT_OK" }], 3),
+        assistantMessage([{ type: "text", text: "PULSE_ACK" }], 1),
+        assistantMessage("PULSE_ACK", 2),
+        userMessage([{ type: "text", text: "PULSE_ACK" }], 3),
         assistantMessage([{ type: "text", text: "Visible reply" }], 4),
       ],
     });
@@ -3547,7 +3547,7 @@ describe("buildCachedChatItems", () => {
     ]);
   });
 
-  it("suppresses assistant HEARTBEAT_OK acknowledgements that carry hidden thinking blocks", () => {
+  it("suppresses assistant PULSE_ACK acknowledgements that carry hidden thinking blocks", () => {
     const groups = messageGroups({
       messages: [
         assistantMessage(
@@ -3555,7 +3555,7 @@ describe("buildCachedChatItems", () => {
             { type: "thinking", thinking: "Checking scheduled work." },
             {
               type: "text",
-              text: "HEARTBEAT_OK",
+              text: "PULSE_ACK",
               textSignature: JSON.stringify({ v: 1, phase: "final_answer" }),
             },
           ],
@@ -3564,7 +3564,7 @@ describe("buildCachedChatItems", () => {
         assistantMessage(
           [
             { id: "rs_1", type: "reasoning" },
-            { type: "text", text: "HEARTBEAT_OK" },
+            { type: "text", text: "PULSE_ACK" },
           ],
           2,
         ),
@@ -3586,10 +3586,10 @@ describe("buildCachedChatItems", () => {
     ]);
   });
 
-  it("keeps HEARTBEAT_OK turns that carry visible non-text content", () => {
+  it("keeps PULSE_ACK turns that carry visible non-text content", () => {
     const canvasBlock = createAssistantCanvasBlock({ suffix: "heartbeat_visible_content" });
     const groups = messageGroups({
-      messages: [assistantMessage([{ type: "text", text: "HEARTBEAT_OK" }, canvasBlock], 1)],
+      messages: [assistantMessage([{ type: "text", text: "PULSE_ACK" }, canvasBlock], 1)],
     });
 
     expect(groups).toHaveLength(1);
@@ -3599,8 +3599,8 @@ describe("buildCachedChatItems", () => {
 
   it.each([
     {
-      name: "suppresses active HEARTBEAT_OK streams before rendering",
-      stream: "HEARTBEAT_OK",
+      name: "suppresses active PULSE_ACK streams before rendering",
+      stream: "PULSE_ACK",
     },
     {
       name: "suppresses active sender metadata streams before rendering",

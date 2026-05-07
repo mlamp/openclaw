@@ -173,7 +173,7 @@ describe("PR #126853 real Gateway lane proof", () => {
               visibleRequestStarted();
             }
             await providerResponsesReleased;
-            writeAssistantResponse(response, kind === "heartbeat" ? "HEARTBEAT_OK" : "VISIBLE_OK");
+            writeAssistantResponse(response, kind === "heartbeat" ? "PULSE_ACK" : "VISIBLE_OK");
           })().catch((error: unknown) => {
             response.writeHead(500).end(error instanceof Error ? error.message : String(error));
           });

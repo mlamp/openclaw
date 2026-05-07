@@ -1264,11 +1264,11 @@ describe("runCronIsolatedAgentTurn message tool policy", () => {
     mockRunCronFallbackPassthrough();
     resolveCronDeliveryPlanMock.mockReturnValue(makeAnnounceDeliveryPlan());
     resolveCronPayloadOutcomeMock.mockReturnValue({
-      summary: "HEARTBEAT_OK",
-      outputText: "HEARTBEAT_OK",
-      synthesizedText: "HEARTBEAT_OK",
-      deliveryPayload: { text: "HEARTBEAT_OK" },
-      deliveryPayloads: [{ text: "HEARTBEAT_OK" }],
+      summary: "PULSE_ACK",
+      outputText: "PULSE_ACK",
+      synthesizedText: "PULSE_ACK",
+      deliveryPayload: { text: "PULSE_ACK" },
+      deliveryPayloads: [{ text: "PULSE_ACK" }],
       deliveryDisposition: { kind: "heartbeat", controlOnly: true },
       deliveryPayloadHasStructuredContent: false,
       hasFatalErrorPayload: false,

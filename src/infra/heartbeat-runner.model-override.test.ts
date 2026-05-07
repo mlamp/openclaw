@@ -77,7 +77,7 @@ describe("runHeartbeatOnce – heartbeat model override", () => {
   }) {
     await params.seedSession(params.sessionKey, { lastChannel: "whatsapp", lastTo: "+1555" });
 
-    params.replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+    params.replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
     await runHeartbeatOnce({
       cfg: params.cfg,

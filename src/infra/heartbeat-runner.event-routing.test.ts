@@ -323,7 +323,7 @@ describe("Heartbeat event routing", () => {
           isNewSession: false,
           events: eventContext?.events ?? [],
         });
-        return { text: "HEARTBEAT_OK" };
+        return { text: "PULSE_ACK" };
       });
 
       const result = await runHeartbeatOnce({
@@ -536,7 +536,7 @@ describe("Heartbeat event routing", () => {
 
       const sendTelegram = vi.fn();
       const getReplySpy = vi.fn().mockResolvedValue({
-        text: "HEARTBEAT_OK",
+        text: "PULSE_ACK",
       });
       enqueueSystemEvent("Exec completed (review-run, code 0)", {
         sessionKey,

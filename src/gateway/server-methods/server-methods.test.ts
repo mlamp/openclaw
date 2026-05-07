@@ -1790,19 +1790,19 @@ describe("projectChatDisplayMessages", () => {
   });
 
   it("keeps forwarded sessions_send heartbeat-looking text visible", () => {
-    const result = projectChatDisplayMessages([sessionsSendHistoryMessage("HEARTBEAT_OK", 1)]);
+    const result = projectChatDisplayMessages([sessionsSendHistoryMessage("PULSE_ACK", 1)]);
 
-    expect(result).toEqual([projectedSessionsSendHistoryMessage("HEARTBEAT_OK", 1)]);
+    expect(result).toEqual([projectedSessionsSendHistoryMessage("PULSE_ACK", 1)]);
   });
 
   it("keeps forwarded sessions_send heartbeat-looking text visible after a heartbeat prompt", () => {
     const result = projectChatDisplayMessages([
       userHistoryMessage(HEARTBEAT_PROMPT, { timestamp: 1 }),
-      sessionsSendHistoryMessage("HEARTBEAT_OK", 2),
+      sessionsSendHistoryMessage("PULSE_ACK", 2),
     ]);
 
     expect(result).toEqual([
-      projectedSessionsSendHistoryMessage("HEARTBEAT_OK", 2, {
+      projectedSessionsSendHistoryMessage("PULSE_ACK", 2, {
         __openclaw: { turnBoundary: true },
       }),
     ]);

@@ -569,12 +569,12 @@ describe("waitForDescendantSubagentSummary", () => {
 
   it.each([
     "NO_REPLY",
-    "HEARTBEAT_OK",
-    "**HEARTBEAT_OK**",
-    "<b>HEARTBEAT_OK</b>",
-    "<thinking>Check the schedule.</thinking>\nHEARTBEAT_OK",
-    '{"action":"HEARTBEAT_OK"}',
-    '"HEARTBEAT_OK"',
+    "PULSE_ACK",
+    "**PULSE_ACK**",
+    "<b>PULSE_ACK</b>",
+    "<thinking>Check the schedule.</thinking>\nPULSE_ACK",
+    '{"action":"PULSE_ACK"}',
+    '"PULSE_ACK"',
   ])(
     "skips the %s control-only parent reply instead of treating it as child output",
     async (parentReply) => {
@@ -596,11 +596,11 @@ describe("waitForDescendantSubagentSummary", () => {
   );
 
   it.each([
-    "HEARTBEAT_OK child completed the scheduled reminder",
-    "child completed the scheduled reminder HEARTBEAT_OK",
-    "<b>HEARTBEAT_OK</b> child completed the scheduled reminder",
-    "<thinking>Check the schedule.</thinking>\nHere is the scheduled reminder.\nHEARTBEAT_OK",
-    '{"action":"HEARTBEAT_OK","message":"child completed the scheduled reminder"}',
+    "PULSE_ACK child completed the scheduled reminder",
+    "child completed the scheduled reminder PULSE_ACK",
+    "<b>PULSE_ACK</b> child completed the scheduled reminder",
+    "<thinking>Check the schedule.</thinking>\nHere is the scheduled reminder.\nPULSE_ACK",
+    '{"action":"PULSE_ACK","message":"child completed the scheduled reminder"}',
   ])(
     "preserves substantive synthesis that also contains a heartbeat token: %s",
     async (synthesis) => {

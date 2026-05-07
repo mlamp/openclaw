@@ -176,7 +176,7 @@ describe("heartbeat pending-final delivery ownership", () => {
   );
 
   it.each([
-    { name: "heartbeat ack", payload: () => ({ text: "HEARTBEAT_OK" }), sends: 0 },
+    { name: "heartbeat ack", payload: () => ({ text: "PULSE_ACK" }), sends: 0 },
     {
       name: "quiet tool response",
       payload: () =>

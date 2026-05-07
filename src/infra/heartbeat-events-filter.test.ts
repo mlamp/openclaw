@@ -117,7 +117,7 @@ describe("heartbeat event prompts", () => {
 
     expect(prompt).toContain("heartbeat_respond");
     expect(prompt).toContain("notify=false");
-    expect(prompt).not.toContain("HEARTBEAT_OK");
+    expect(prompt).not.toContain("PULSE_ACK");
   });
 
   it("uses heartbeat_respond for quiet exec completion events in response-tool mode", () => {
@@ -125,7 +125,7 @@ describe("heartbeat event prompts", () => {
 
     expect(prompt).toContain("heartbeat_respond");
     expect(prompt).toContain("notify=false");
-    expect(prompt).not.toContain("HEARTBEAT_OK");
+    expect(prompt).not.toContain("PULSE_ACK");
   });
 });
 
@@ -153,7 +153,7 @@ describe("heartbeat event classification", () => {
     { value: "   ", expected: false },
     { value: "NO_REPLY", expected: false },
     { value: "no_reply: actual reminder", expected: true },
-    { value: "HEARTBEAT_OK", expected: false },
+    { value: "PULSE_ACK", expected: false },
     { value: "heartbeat_ok: already handled", expected: false },
     { value: "heartbeat poll: noop", expected: false },
     { value: "heartbeat wake: noop", expected: false },

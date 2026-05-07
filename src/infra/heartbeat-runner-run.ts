@@ -132,7 +132,7 @@ export async function runHeartbeatOnce(opts: HeartbeatRunOptions): Promise<Heart
       }
       return send.status === "sent";
     } catch (err) {
-      log.warn(`heartbeat: HEARTBEAT_OK delivery failed: ${formatErrorMessage(err)}`);
+      log.warn(`heartbeat: PULSE_ACK delivery failed: ${formatErrorMessage(err)}`);
       return false;
     }
   };

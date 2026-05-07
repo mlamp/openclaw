@@ -193,7 +193,7 @@ describe("stale exec heartbeat wakes", () => {
       });
       enqueueSystemEvent("Unrelated queued event", { sessionKey });
 
-      const getReplyFromConfig = vi.fn().mockResolvedValue({ text: "HEARTBEAT_OK" });
+      const getReplyFromConfig = vi.fn().mockResolvedValue({ text: "PULSE_ACK" });
       const telegram = vi.fn().mockResolvedValue({
         messageId: "m1",
         chatId: "155462274",
@@ -239,7 +239,7 @@ describe("stale exec heartbeat wakes", () => {
         contextKey: "cron:overnight-report",
       });
 
-      const getReplyFromConfig = vi.fn().mockResolvedValue({ text: "HEARTBEAT_OK" });
+      const getReplyFromConfig = vi.fn().mockResolvedValue({ text: "PULSE_ACK" });
       const result = await runHeartbeatOnce({
         cfg,
         agentId: "main",

@@ -156,7 +156,7 @@ describe("runCronIsolatedAgentTurn — interim ack retry", () => {
       to: "123",
     });
     runEmbeddedAgentMock.mockResolvedValueOnce({
-      payloads: [{ text: "HEARTBEAT_OK" }, { text: finalResult }],
+      payloads: [{ text: "PULSE_ACK" }, { text: finalResult }],
       meta: {
         finalAssistantVisibleText: finalResult,
         agentMeta: { usage: { input: 10, output: 20 } },

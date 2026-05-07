@@ -9,7 +9,7 @@ import type { ReplyPayload } from "./types.js";
 
 describe("resolveHeartbeatReplyPayload", () => {
   it("returns a single non-array payload unchanged", () => {
-    const payload: ReplyPayload = { text: "HEARTBEAT_OK" };
+    const payload: ReplyPayload = { text: "PULSE_ACK" };
     expect(resolveHeartbeatReplyPayload(payload)).toBe(payload);
   });
 
@@ -20,7 +20,7 @@ describe("resolveHeartbeatReplyPayload", () => {
 
   it("resolves terminal tool-failure metadata independently of payload order", () => {
     const heartbeat = setReplyPayloadMetadata(
-      { text: "HEARTBEAT_OK" },
+      { text: "PULSE_ACK" },
       { heartbeatTerminalToolFailure: { toolName: "message" } },
     );
     const warning: ReplyPayload = { text: "Message failed", isError: true };
@@ -37,7 +37,7 @@ describe("resolveHeartbeatReplyPayload", () => {
   });
 
   it("skips a trailing reasoning payload and returns the assistant answer", () => {
-    const answer: ReplyPayload = { text: "HEARTBEAT_OK" };
+    const answer: ReplyPayload = { text: "PULSE_ACK" };
     const reasoning: ReplyPayload = {
       text: "The message is an OpenClaw heartbeat poll. I should check recent chat...",
       isReasoning: true,

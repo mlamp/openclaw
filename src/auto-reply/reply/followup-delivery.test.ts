@@ -91,7 +91,7 @@ describe("resolveFollowupDeliveryPayloads", () => {
     expect(
       resolveFollowupDeliveryPayloads({
         cfg: baseConfig,
-        payloads: [{ text: "HEARTBEAT_OK" }],
+        payloads: [{ text: "PULSE_ACK" }],
       }),
     ).toStrictEqual([]);
   });
@@ -100,14 +100,14 @@ describe("resolveFollowupDeliveryPayloads", () => {
     expect(
       resolveFollowupDeliveryPayloads({
         cfg: baseConfig,
-        payloads: [{ text: "HEARTBEAT_OK", mediaUrl: "/tmp/image.png" }],
+        payloads: [{ text: "PULSE_ACK", mediaUrl: "/tmp/image.png" }],
       }),
     ).toEqual([{ text: "", mediaUrl: "/tmp/image.png" }]);
   });
 
   it("preserves transcript ownership when stripping heartbeat text", () => {
     const payload = setReplyPayloadMetadata(
-      { text: "HEARTBEAT_OK still working" },
+      { text: "PULSE_ACK still working" },
       { assistantTranscriptOwned: true },
     );
 
@@ -666,7 +666,7 @@ describe("resolveFollowupDeliveryDecision", () => {
       "This is a substantive private answer that missed the message tool. It must still trigger recovery when the marked payload is not deliverable.";
     const rawPayloads: ReplyPayload[] = [
       { text: "   " },
-      { text: "HEARTBEAT_OK" },
+      { text: "PULSE_ACK" },
       { text: "hidden reasoning", isReasoning: true },
     ];
 

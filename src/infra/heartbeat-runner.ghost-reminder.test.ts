@@ -88,7 +88,7 @@ describe("Ghost reminder bug (issue #13317)", () => {
     }
     expect(calledCtx.Body).toContain("scheduled reminder has been triggered");
     expect(calledCtx.Body).toContain(reminderText);
-    expect(calledCtx.Body).not.toContain("HEARTBEAT_OK");
+    expect(calledCtx.Body).not.toContain("PULSE_ACK");
     expect(calledCtx.Body).not.toContain("heartbeat poll");
   };
 
@@ -208,13 +208,13 @@ describe("Ghost reminder bug (issue #13317)", () => {
     );
   };
 
-  it("does not use CRON_EVENT_PROMPT when only a HEARTBEAT_OK event is present", async () => {
+  it("does not use CRON_EVENT_PROMPT when only a PULSE_ACK event is present", async () => {
     const { result, sendTelegram, calledCtx, replyCallCount } = await runHeartbeatCase({
       tmpPrefix: "openclaw-ghost-",
       replyText: "Heartbeat check-in",
       reason: "cron:test-job",
       enqueue: (sessionKey) => {
-        enqueueSystemEvent("HEARTBEAT_OK", { sessionKey });
+        enqueueSystemEvent("PULSE_ACK", { sessionKey });
       },
     });
     expect(result.status).toBe("ran");
@@ -265,7 +265,7 @@ describe("Ghost reminder bug (issue #13317)", () => {
     const { result, sendTelegram, calledCtx } = await runCronReminderCase(
       "openclaw-cron-mixed-",
       (sessionKey) => {
-        enqueueSystemEvent("HEARTBEAT_OK", { sessionKey });
+        enqueueSystemEvent("PULSE_ACK", { sessionKey });
         enqueueSystemEvent("Reminder: Check Base Scout results", { sessionKey });
       },
     );
@@ -504,7 +504,7 @@ describe("Ghost reminder bug (issue #13317)", () => {
       const getReplySpy = vi
         .fn()
         .mockResolvedValueOnce({ text: "Relay this cron update now" })
-        .mockResolvedValueOnce({ text: "HEARTBEAT_OK" });
+        .mockResolvedValueOnce({ text: "PULSE_ACK" });
       const { cfg, sessionKey } = await createConfig({ tmpDir, storePath });
 
       enqueueSystemEvent("Cron: memory maintenance completed", {
@@ -819,7 +819,7 @@ describe("Ghost reminder bug (issue #13317)", () => {
           throw new Error("Expected the sandbox heartbeat monitor");
         }
         writeCronJobScratch({ storePath: cronStore, jobId: monitor.jobId, content: "" });
-        const eventText = noise ? "HEARTBEAT_OK" : "Reminder: review the scheduled owner report";
+        const eventText = noise ? "PULSE_ACK" : "Reminder: review the scheduled owner report";
         enqueueSystemEvent(eventText, {
           sessionKey: queueKey,
           ...(tagged ? { contextKey: "cron:owner-report" } : {}),
@@ -851,7 +851,7 @@ describe("Ghost reminder bug (issue #13317)", () => {
               outcome === "suppressed"
                 ? "No channel reply."
                 : noise
-                  ? "HEARTBEAT_OK"
+                  ? "PULSE_ACK"
                   : "Deliver the scheduled report",
           };
         });

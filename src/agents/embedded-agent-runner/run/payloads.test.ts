@@ -658,7 +658,7 @@ describe("buildEmbeddedRunPayloads tool-error warnings", () => {
     });
 
     expect(payloads).toHaveLength(2);
-    expect(payloads[0]?.text).toBe("HEARTBEAT_OK");
+    expect(payloads[0]?.text).toBe("PULSE_ACK");
     expect(payloads[1]).toMatchObject({
       isError: true,
       text: expect.stringContaining("Message failed"),
@@ -799,7 +799,7 @@ describe("buildEmbeddedRunPayloads tool-error warnings", () => {
       },
     });
 
-    expectSinglePayloadText(payloads, "HEARTBEAT_OK");
+    expectSinglePayloadText(payloads, "PULSE_ACK");
     expect(
       getReplyPayloadMetadata(payloads[0] as object)?.heartbeatTerminalToolFailure,
     ).toBeUndefined();

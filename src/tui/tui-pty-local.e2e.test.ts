@@ -129,7 +129,7 @@ const GATEWAY_SCENARIOS = {
     toolsProfile: "minimal",
     // Nonempty runtime output reaches late reply filtering without triggering
     // the embedded empty-response retry, unlike a directive-only response.
-    replyText: "HEARTBEAT_OK",
+    replyText: "PULSE_ACK",
     holdFirstResponse: false,
     followupReplyText: "FOLLOWUP_RUN_COMPLETE",
   },

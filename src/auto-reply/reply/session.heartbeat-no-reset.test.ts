@@ -115,7 +115,7 @@ describe("initSessionState - heartbeat should not trigger session reset", () => 
       const cfg = createBaseConfig();
       const ctx = createBaseCtx({
         InternalTurnSource: source,
-        Body: "HEARTBEAT_OK",
+        Body: "PULSE_ACK",
       });
 
       const result = await initSessionState({
@@ -172,7 +172,7 @@ describe("initSessionState - heartbeat should not trigger session reset", () => 
 
     const ctx = createBaseCtx({
       InternalTurnSource: "heartbeat",
-      Body: "HEARTBEAT_OK",
+      Body: "PULSE_ACK",
     });
 
     const result = await initSessionState({
@@ -204,7 +204,7 @@ describe("initSessionState - heartbeat should not trigger session reset", () => 
     const heartbeatResult = await initSessionState({
       ctx: createBaseCtx({
         InternalTurnSource: "heartbeat",
-        Body: "HEARTBEAT_OK",
+        Body: "PULSE_ACK",
       }),
       cfg,
       commandAuthorized: true,

@@ -36,7 +36,7 @@ describe("stripHeartbeatToken", () => {
   });
 
   it("drops heartbeats with small junk in heartbeat mode", () => {
-    expect(stripHeartbeatToken("HEARTBEAT_OK 🦞", { mode: "heartbeat" })).toEqual(
+    expect(stripHeartbeatToken("PULSE_ACK 🦞", { mode: "heartbeat" })).toEqual(
       createSkippedHeartbeatOutcome(),
     );
     expect(stripHeartbeatToken(`🦞 ${HEARTBEAT_TOKEN}`, { mode: "heartbeat" })).toEqual(
@@ -153,7 +153,7 @@ describe("stripHeartbeatToken", () => {
 });
 
 describe("isHeartbeatAcknowledgementText", () => {
-  it.each([undefined, "", "NO_REPLY", "HEARTBEAT_OK", "HEARTBEAT_OK all good"])(
+  it.each([undefined, "", "NO_REPLY", "PULSE_ACK", "PULSE_ACK all good"])(
     "recognizes %s as a quiet acknowledgement",
     (text) => {
       expect(isHeartbeatAcknowledgementText(text)).toBe(true);
@@ -162,7 +162,7 @@ describe("isHeartbeatAcknowledgementText", () => {
 
   it("preserves substantive replies and the legacy acknowledgement length limit", () => {
     expect(isHeartbeatAcknowledgementText("NO_REPLY: actual reminder")).toBe(false);
-    expect(isHeartbeatAcknowledgementText("HEARTBEAT_OK all good", 0)).toBe(false);
+    expect(isHeartbeatAcknowledgementText("PULSE_ACK all good", 0)).toBe(false);
   });
 });
 

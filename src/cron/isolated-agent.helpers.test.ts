@@ -475,7 +475,7 @@ describe("resolveCronPayloadOutcome", () => {
 
   it("removes an earlier heartbeat acknowledgement from a substantive final result", () => {
     const result = resolveCronPayloadOutcome({
-      payloads: [{ text: "HEARTBEAT_OK" }, { text: "Critical deployment failure" }],
+      payloads: [{ text: "PULSE_ACK" }, { text: "Critical deployment failure" }],
       finalAssistantVisibleText: "Critical deployment failure",
     });
 
@@ -494,10 +494,10 @@ describe("resolveCronPayloadOutcome", () => {
   });
 
   it("keeps a terminal heartbeat acknowledgement intentionally quiet", () => {
-    const payloads = [{ text: "Checked inbox and calendar." }, { text: "HEARTBEAT_OK" }];
+    const payloads = [{ text: "Checked inbox and calendar." }, { text: "PULSE_ACK" }];
     const result = resolveCronPayloadOutcome({
       payloads,
-      finalAssistantVisibleText: "HEARTBEAT_OK",
+      finalAssistantVisibleText: "PULSE_ACK",
     });
 
     expect(result.deliveryPayloads).toEqual(payloads);
@@ -506,8 +506,8 @@ describe("resolveCronPayloadOutcome", () => {
 
   it("records a pure heartbeat acknowledgement as a control-only terminal", () => {
     const result = resolveCronPayloadOutcome({
-      payloads: [{ text: "HEARTBEAT_OK" }],
-      finalAssistantVisibleText: "HEARTBEAT_OK",
+      payloads: [{ text: "PULSE_ACK" }],
+      finalAssistantVisibleText: "PULSE_ACK",
     });
 
     expect(result.deliveryDisposition).toEqual({ kind: "heartbeat", controlOnly: true });
@@ -519,8 +519,8 @@ describe("resolveCronPayloadOutcome", () => {
       mediaUrl: "https://example.com/report.png",
     };
     const result = resolveCronPayloadOutcome({
-      payloads: [{ text: "HEARTBEAT_OK" }, mediaPayload],
-      finalAssistantVisibleText: "HEARTBEAT_OK",
+      payloads: [{ text: "PULSE_ACK" }, mediaPayload],
+      finalAssistantVisibleText: "PULSE_ACK",
     });
 
     expect(result.deliveryPayloads).toEqual([mediaPayload]);
@@ -529,12 +529,12 @@ describe("resolveCronPayloadOutcome", () => {
 
   it("keeps a heartbeat-labelled payload when the same payload carries media", () => {
     const mediaPayload = {
-      text: "HEARTBEAT_OK",
+      text: "PULSE_ACK",
       mediaUrl: "https://example.com/report.png",
     };
     const result = resolveCronPayloadOutcome({
       payloads: [mediaPayload],
-      finalAssistantVisibleText: "HEARTBEAT_OK",
+      finalAssistantVisibleText: "PULSE_ACK",
     });
 
     expect(result.deliveryPayloads).toEqual([mediaPayload]);

@@ -6443,7 +6443,7 @@ describe("agent event handler", () => {
     });
 
     emitAgentEvent(handler, "run-heartbeat", "assistant", {
-      text: "HEARTBEAT_OK Read HEARTBEAT.md if it exists (workspace context). Follow it strictly.",
+      text: "PULSE_ACK Read HEARTBEAT.md if it exists (workspace context). Follow it strictly.",
     });
 
     expect(chatBroadcastCalls(broadcast)).toHaveLength(0);
@@ -6471,7 +6471,7 @@ describe("agent event handler", () => {
 
     const alert = `Disk usage crossed 95 percent on /data. ${"Cleanup required. ".repeat(20)}`;
     emitAgentEvent(handler, "run-heartbeat-alert", "assistant", {
-      text: `HEARTBEAT_OK ${alert}`,
+      text: `PULSE_ACK ${alert}`,
     });
 
     emitLifecycleEnd(handler, "run-heartbeat-alert");

@@ -797,7 +797,7 @@ describe("agentCommand compaction transcript rotation", () => {
     ["empty payloads", "empty", []],
     ["a silent NO_REPLY payload", "silent", [{ text: "NO_REPLY" }]],
     ["a reasoning-only payload", "reasoning", [{ text: "hidden reasoning", isReasoning: true }]],
-    ["a heartbeat-only payload", "heartbeat", [{ text: "HEARTBEAT_OK" }]],
+    ["a heartbeat-only payload", "heartbeat", [{ text: "PULSE_ACK" }]],
     ["an outbound-suppressed relay placeholder", "relay-status", [{ text: "No channel reply." }]],
   ] as const)(
     "keeps compaction failure fatal for %s without manufacturing delivery state",

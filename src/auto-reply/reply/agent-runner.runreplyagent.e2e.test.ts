@@ -1891,7 +1891,7 @@ describe("runReplyAgent heartbeat followup guard", () => {
     state.runEmbeddedAgentMock.mockImplementationOnce(async (params: AgentRunParams) => {
       await params.onPartialReply?.({ text: "heartbeat detail" });
       return {
-        payloads: [{ text: "HEARTBEAT_OK" }],
+        payloads: [{ text: "PULSE_ACK" }],
         meta: { agentMeta: { usage: { input: 1, output: 1 } } },
       };
     });
@@ -3524,13 +3524,13 @@ describe("runReplyAgent pending final delivery capture", () => {
   });
 
   it("persists heartbeat reply remainder as pending delivery when remainder exceeds ackMaxChars", async () => {
-    // When a heartbeat response contains HEARTBEAT_OK followed by substantive content,
+    // When a heartbeat response contains PULSE_ACK followed by substantive content,
     // the remainder after stripping the token must be persisted for durable delivery.
     // The default ackMaxChars is 300 — any remainder longer than that is treated as real content.
     const { sessionEntry, sessionStore, storePath } = await makeSessionFixture();
     const longRemainder = "Sent daily digest to channel. ".repeat(12).trimEnd(); // ~360 chars, > 300
     state.runEmbeddedAgentMock.mockResolvedValueOnce({
-      payloads: [{ text: `HEARTBEAT_OK ${longRemainder}` }],
+      payloads: [{ text: `PULSE_ACK ${longRemainder}` }],
       meta: {},
     });
 
@@ -3607,7 +3607,7 @@ describe("runReplyAgent typing (heartbeat)", () => {
     );
     try {
       state.runEmbeddedAgentMock.mockResolvedValueOnce({
-        payloads: [{ text: "HEARTBEAT_OK" }],
+        payloads: [{ text: "PULSE_ACK" }],
         meta: {},
       });
 
@@ -4571,7 +4571,7 @@ describe("runReplyAgent typing (heartbeat)", () => {
     },
     {
       label: "heartbeat acknowledgement",
-      payload: { text: "HEARTBEAT_OK" },
+      payload: { text: "PULSE_ACK" },
       opts: { isHeartbeat: true as const },
       expectedText: HEARTBEAT_EXTERNAL_RUN_FAILURE_TEXT,
     },

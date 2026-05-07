@@ -811,7 +811,7 @@ describe("chat history in-flight assistant recovery", () => {
     expect(state.chatStream).toBeNull();
   });
 
-  it.each(["NO_REPLY", "HEARTBEAT_OK"])(
+  it.each(["NO_REPLY", "PULSE_ACK"])(
     "does not expose a suppressed %s response while restoring run ownership",
     async (hiddenResponse) => {
       const history = activeHistory("run-reconnected");

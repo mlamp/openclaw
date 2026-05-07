@@ -287,7 +287,7 @@ describe("doctor transcript and heartbeat session repairs", () => {
       path.join(sessionsDir, "heartbeat-session.jsonl"),
       [
         JSON.stringify({ message: { role: "user", content: HEARTBEAT_TRANSCRIPT_PROMPT } }),
-        JSON.stringify({ message: { role: "assistant", content: "HEARTBEAT_OK" } }),
+        JSON.stringify({ message: { role: "assistant", content: "PULSE_ACK" } }),
         "",
       ].join("\n"),
     );
@@ -341,7 +341,7 @@ describe("doctor transcript and heartbeat session repairs", () => {
       path.join(sessionsDir, "mixed-session.jsonl"),
       [
         JSON.stringify({ message: { role: "user", content: HEARTBEAT_TRANSCRIPT_PROMPT } }),
-        JSON.stringify({ message: { role: "assistant", content: "HEARTBEAT_OK" } }),
+        JSON.stringify({ message: { role: "assistant", content: "PULSE_ACK" } }),
         JSON.stringify({ message: { role: "user", content: "hello from telegram" } }),
         "",
       ].join("\n"),
@@ -372,7 +372,7 @@ describe("doctor transcript and heartbeat session repairs", () => {
     const transcriptPath = path.join(sessionsDir, "large-heartbeat-session.jsonl");
     const heartbeatLine = `${JSON.stringify({
       message: { role: "user", content: HEARTBEAT_TRANSCRIPT_PROMPT },
-    })}\n${JSON.stringify({ message: { role: "assistant", content: "HEARTBEAT_OK" } })}\n`;
+    })}\n${JSON.stringify({ message: { role: "assistant", content: "PULSE_ACK" } })}\n`;
     // >64 KiB so the sync scanner must read more than one chunk.
     const repeats = Math.ceil((80 * 1024) / heartbeatLine.length);
     fs.writeFileSync(transcriptPath, heartbeatLine.repeat(repeats));
@@ -569,7 +569,7 @@ describe("doctor transcript and heartbeat session repairs", () => {
         transcriptPath,
         [
           JSON.stringify({ message: { role: "user", content: HEARTBEAT_TRANSCRIPT_PROMPT } }),
-          JSON.stringify({ message: { role: "assistant", content: "HEARTBEAT_OK" } }),
+          JSON.stringify({ message: { role: "assistant", content: "PULSE_ACK" } }),
           "",
         ].join("\n"),
       );

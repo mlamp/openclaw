@@ -1442,9 +1442,9 @@ describe("handleChatGatewayEvent", () => {
     expect(state.chatMessages).toStrictEqual([]);
   });
 
-  it("drops HEARTBEAT_OK final payload from another run without clearing active stream", () => {
+  it("drops PULSE_ACK final payload from another run without clearing active stream", () => {
     const state = createActiveStreamingState();
-    const payload = createOtherRunSilentFinalPayload("HEARTBEAT_OK");
+    const payload = createOtherRunSilentFinalPayload("PULSE_ACK");
 
     expect(handleChatGatewayEvent(state, payload)).toBe("final");
     expect(state.chatRunId).toBe("run-user");
@@ -1467,7 +1467,7 @@ describe("handleChatGatewayEvent", () => {
     },
   );
 
-  it("ignores HEARTBEAT_OK delta updates", () => {
+  it("ignores PULSE_ACK delta updates", () => {
     const state = createState({
       sessionKey: "main",
       chatRunId: "run-1",
@@ -1477,7 +1477,7 @@ describe("handleChatGatewayEvent", () => {
       runId: "run-1",
       sessionKey: "main",
       state: "delta",
-      message: { role: "assistant", content: [{ type: "text", text: "HEARTBEAT_OK" }] },
+      message: { role: "assistant", content: [{ type: "text", text: "PULSE_ACK" }] },
     };
 
     expect(handleChatGatewayEvent(state, payload)).toBe("delta");
@@ -3186,7 +3186,7 @@ describe("loadChatHistory retry handling", () => {
 
   it("filters heartbeat acknowledgements and internal-only user messages", async () => {
     const { state } = createHistorySnapshot([
-      { role: "assistant", content: [{ type: "text", text: "HEARTBEAT_OK" }] },
+      { role: "assistant", content: [{ type: "text", text: "PULSE_ACK" }] },
       createTextChatMessage(
         "user",
         [

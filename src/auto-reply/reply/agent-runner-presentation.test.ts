@@ -23,7 +23,7 @@ function normalizeStreamingTextReference(
   if (options.silentExpected) {
     return { skip: true };
   }
-  if (!options.isHeartbeat && text?.includes("HEARTBEAT_OK")) {
+  if (!options.isHeartbeat && text?.includes("PULSE_ACK")) {
     const stripped = stripHeartbeatToken(text, { mode: "message" });
     if (stripped.shouldSkip && !reply.hasMedia) {
       return { skip: true };
@@ -360,7 +360,7 @@ describe("agent runner streaming presentation", () => {
     );
     const sequences: ReplyPayload[][] = [
       ...randomSequences,
-      cumulativePrefixes("HEARTBEAT_OK visible after heartbeat", 41).map((text) => ({ text })),
+      cumulativePrefixes("PULSE_ACK visible after heartbeat", 41).map((text) => ({ text })),
       ["N", "NO_", "NO_REPLY"].map((text) => ({ text })),
       [{ text: "NO_REPLYVisible" }, { text: "NO_REPLYVisible answer" }],
       [" ", "  ", "  \n"].map((text) => ({ text })),
@@ -388,10 +388,8 @@ describe("agent runner streaming presentation", () => {
     });
 
     const heartbeatPresentation = createPresentation({ isHeartbeat: true });
-    expect(
-      heartbeatPresentation.classifyStreamingPartial({ text: "HEARTBEAT_OK details" }),
-    ).toEqual({
-      text: "HEARTBEAT_OK details",
+    expect(heartbeatPresentation.classifyStreamingPartial({ text: "PULSE_ACK details" })).toEqual({
+      text: "PULSE_ACK details",
       skip: false,
     });
   });

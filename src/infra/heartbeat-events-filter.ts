@@ -158,7 +158,7 @@ export function buildExecEventPrompt(
   );
 }
 
-const HEARTBEAT_OK_PREFIX = normalizeLowercaseStringOrEmpty(HEARTBEAT_TOKEN);
+const PULSE_ACK_PREFIX = normalizeLowercaseStringOrEmpty(HEARTBEAT_TOKEN);
 
 function isHeartbeatNoiseEvent(evt: string): boolean {
   const lower = normalizeLowercaseStringOrEmpty(evt);
@@ -167,8 +167,8 @@ function isHeartbeatNoiseEvent(evt: string): boolean {
   }
   return (
     isHeartbeatAcknowledgementText(evt, 0) ||
-    (lower.startsWith(HEARTBEAT_OK_PREFIX) &&
-      !/[a-z0-9_]/.test(lower.charAt(HEARTBEAT_OK_PREFIX.length))) ||
+    (lower.startsWith(PULSE_ACK_PREFIX) &&
+      !/[a-z0-9_]/.test(lower.charAt(PULSE_ACK_PREFIX.length))) ||
     lower.includes("heartbeat poll") ||
     lower.includes("heartbeat wake")
   );

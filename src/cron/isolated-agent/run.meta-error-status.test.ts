@@ -267,12 +267,12 @@ describe("runCronIsolatedAgentTurn - meta.error status propagation", () => {
   });
 
   it.each([
-    "HEARTBEAT_OK",
-    "**HEARTBEAT_OK**",
-    "<b>HEARTBEAT_OK</b>",
-    "<thinking>Check the schedule.</thinking>\nHEARTBEAT_OK",
-    '{"action":"HEARTBEAT_OK"}',
-    '"HEARTBEAT_OK"',
+    "PULSE_ACK",
+    "**PULSE_ACK**",
+    "<b>PULSE_ACK</b>",
+    "<thinking>Check the schedule.</thinking>\nPULSE_ACK",
+    '{"action":"PULSE_ACK"}',
+    '"PULSE_ACK"',
   ])(
     "waits for the accepted child instead of treating %s as its final reply",
     async (heartbeatReply) => {
@@ -311,12 +311,12 @@ describe("runCronIsolatedAgentTurn - meta.error status propagation", () => {
     {
       name: "a substantive sibling payload",
       parentReply: "Checked inbox and calendar.",
-      payloads: [{ text: "Checked inbox and calendar." }, { text: "HEARTBEAT_OK" }],
+      payloads: [{ text: "Checked inbox and calendar." }, { text: "PULSE_ACK" }],
     },
     {
       name: "substantive text in the heartbeat payload",
-      parentReply: "HEARTBEAT_OK child completed reminder",
-      payloads: [{ text: "HEARTBEAT_OK child completed reminder" }],
+      parentReply: "PULSE_ACK child completed reminder",
+      payloads: [{ text: "PULSE_ACK child completed reminder" }],
     },
   ])(
     "preserves $name instead of treating an accepted child as the only completion",
@@ -353,7 +353,7 @@ describe("runCronIsolatedAgentTurn - meta.error status propagation", () => {
   );
 
   it("preserves a heartbeat-only accepted child handoff failure as a cron error", async () => {
-    const heartbeatPayload = { text: "HEARTBEAT_OK" };
+    const heartbeatPayload = { text: "PULSE_ACK" };
     const error = "cron child-session handoff timed out before producing a final assistant payload";
     mockAgentRun({
       payloads: [heartbeatPayload],

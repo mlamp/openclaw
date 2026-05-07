@@ -553,7 +553,7 @@ describe("CodexAppServerEventProjector dynamic tool projection", () => {
       }),
       success: true,
       terminalType: "completed",
-      contentItems: [{ type: "inputText", text: "HEARTBEAT_OK" }],
+      contentItems: [{ type: "inputText", text: "PULSE_ACK" }],
     });
 
     expect(projector.buildResult(buildEmptyToolTelemetry()).lastToolError).toMatchObject({

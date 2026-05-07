@@ -180,7 +180,7 @@ describe("session menu navigation actions", () => {
       page([
         message(1, "Visible response"),
         message(2, "NO_REPLY"),
-        message(3, "HEARTBEAT_OK"),
+        message(3, "PULSE_ACK"),
         { role: "user", content: " " },
         {
           role: "toolResult",
@@ -192,7 +192,7 @@ describe("session menu navigation actions", () => {
     await runSessionNavigationAction("copy-markdown", params);
     const copied = vi.mocked(copyToClipboard).mock.calls[0]?.[0] ?? "";
     expect(copied).toContain("Visible response");
-    expect(copied).not.toMatch(/NO_REPLY|HEARTBEAT_OK|transcript repair|## You/);
+    expect(copied).not.toMatch(/NO_REPLY|PULSE_ACK|transcript repair|## You/);
   });
 
   it.each([

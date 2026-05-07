@@ -343,13 +343,13 @@ export function extractSessionStatusSessionKey(
   return /"sessionKey"\s*:\s*"([^"]+)"/.exec(toolOutput)?.[1]?.trim() ?? "";
 }
 
-export function resolveHeartbeatPromptReply(text: string): "HEARTBEAT_OK" | "NO_REPLY" | undefined {
+export function resolveHeartbeatPromptReply(text: string): "PULSE_ACK" | "NO_REPLY" | undefined {
   const trimmed = text.trim();
   if (!trimmed || /remember this fact/i.test(trimmed)) {
     return undefined;
   }
   if (/(?:^|\n)Read HEARTBEAT\.md if it exists\b/i.test(trimmed)) {
-    return "HEARTBEAT_OK";
+    return "PULSE_ACK";
   }
   return /(?:^|[.\n]\s*)If nothing needs attention, reply NO_REPLY\b/i.test(trimmed)
     ? "NO_REPLY"

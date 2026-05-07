@@ -1143,7 +1143,7 @@ describe("qa mock openai server", () => {
     const final = await expectNonStreamingResponsesJson<{
       output: Array<{ content?: Array<{ text?: string }> }>;
     }>(server, {
-      instructions: "If nothing needs attention, reply exactly: HEARTBEAT_OK",
+      instructions: "If nothing needs attention, reply exactly: PULSE_ACK",
       input: [
         makeUserInput(
           "Earlier tool progress QA check: after the tool returns, reply exactly `STALE_PROGRESS_MARKER`.",
@@ -1278,7 +1278,7 @@ describe("qa mock openai server", () => {
     const final = await expectNonStreamingResponsesJson<{
       output: Array<{ content?: Array<{ text?: string }> }>;
     }>(server, {
-      instructions: "If this is a heartbeat check, reply exactly: HEARTBEAT_OK",
+      instructions: "If this is a heartbeat check, reply exactly: PULSE_ACK",
       input: [
         makeUserInput("Read QA_KICKOFF_TASK.md, then summarize what you found."),
         makeToolOutputWithCallId(
@@ -1290,7 +1290,7 @@ describe("qa mock openai server", () => {
 
     const text = final.output[0]?.content?.[0]?.text ?? "";
     expect(text).toContain("Protocol note: I reviewed the requested material.");
-    expect(text).not.toContain("HEARTBEAT_OK");
+    expect(text).not.toContain("PULSE_ACK");
   });
 
   it("preserves surrogate pairs in HTTP tool-output evidence snippets", async () => {
@@ -4871,8 +4871,8 @@ Update and merge these partial structured summaries.`,
     {
       name: "legacy workspace heartbeat",
       prompt:
-        "System: Gateway restart config-apply ok\nSystem: QA-SUBAGENT-RECOVERY-1234\n\nRead HEARTBEAT.md if it exists (workspace context). Follow it strictly. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply HEARTBEAT_OK.",
-      reply: "HEARTBEAT_OK",
+        "System: Gateway restart config-apply ok\nSystem: QA-SUBAGENT-RECOVERY-1234\n\nRead HEARTBEAT.md if it exists (workspace context). Follow it strictly. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply PULSE_ACK.",
+      reply: "PULSE_ACK",
     },
     {
       name: "automation heartbeat",
@@ -7973,7 +7973,7 @@ Update and merge these partial structured summaries.`,
       system: [
         {
           type: "text",
-          text: "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly. If nothing needs attention, reply HEARTBEAT_OK.",
+          text: "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly. If nothing needs attention, reply PULSE_ACK.",
         },
       ],
       messages: [
@@ -7985,7 +7985,7 @@ Update and merge these partial structured summaries.`,
 
     const body = await response.text();
     expect(body).toContain("Remembered ALPHA-7.");
-    expect(body).not.toContain("HEARTBEAT_OK");
+    expect(body).not.toContain("PULSE_ACK");
     expect(body).not.toContain('"name":"read"');
   });
 
@@ -8000,7 +8000,7 @@ Update and merge these partial structured summaries.`,
           text: [
             "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly.",
             "If the current user message is a heartbeat poll and nothing needs attention, reply exactly:",
-            "HEARTBEAT_OK",
+            "PULSE_ACK",
           ].join("\n"),
         },
       ],
@@ -8013,7 +8013,7 @@ Update and merge these partial structured summaries.`,
 
     const body = await response.text();
     expect(body).toContain("Remembered ALPHA-7.");
-    expect(body).not.toContain("HEARTBEAT_OK");
+    expect(body).not.toContain("PULSE_ACK");
   });
 
   it("rejects malformed or non-object Anthropic /v1/messages JSON", async () => {
@@ -8357,7 +8357,7 @@ Update and merge these partial structured summaries.`,
           makeUserInput(
             [
               "Empty response after write recovery QA check: write once, then respond with exact marker: `CRON-EMPTY-WRITE-RECOVERED-OK`.",
-              "This is an unattended scheduled run. If nothing needs doing, reply exactly HEARTBEAT_OK.",
+              "This is an unattended scheduled run. If nothing needs doing, reply exactly PULSE_ACK.",
             ].join("\n\n"),
           ),
           makeUserInput(
@@ -8378,7 +8378,7 @@ Update and merge these partial structured summaries.`,
           makeUserInput("Read HEARTBEAT.md if it exists."),
         ],
       });
-      expect(outputText(laterHeartbeatPayload)).toBe("HEARTBEAT_OK");
+      expect(outputText(laterHeartbeatPayload)).toBe("PULSE_ACK");
     },
   );
 

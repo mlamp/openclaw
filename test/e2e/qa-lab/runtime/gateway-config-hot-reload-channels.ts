@@ -80,7 +80,7 @@ export async function proveHotReloadChannels({
                 target: CHANNEL,
                 to: "dm:hot-reload-heartbeat",
                 accountId: "default",
-                prompt: "Reply exactly `HEARTBEAT_OK`",
+                prompt: "Reply exactly `PULSE_ACK`",
               },
             },
           },
@@ -272,7 +272,7 @@ export async function proveHotReloadChannels({
             },
             40_000,
           );
-          // Reply normalization removes plain HEARTBEAT_OK before the heartbeat owner,
+          // Reply normalization removes plain PULSE_ACK before the heartbeat owner,
           // which receives an empty successful result and still applies showOk.
           assert.equal(event.status, "ok-empty", JSON.stringify(event));
           assert.equal(event.channel, CHANNEL);
@@ -288,7 +288,7 @@ export async function proveHotReloadChannels({
             );
           assert.equal(delivered.length - outboundBefore, showOk ? 1 : 0);
           if (showOk) {
-            assert.equal(delivered.at(-1)?.text, "HEARTBEAT_OK");
+            assert.equal(delivered.at(-1)?.text, "PULSE_ACK");
           }
           observations.push({
             prefix: "channels.defaults",
@@ -299,7 +299,7 @@ export async function proveHotReloadChannels({
         }
         await record(
           "channels.defaults",
-          "Real heartbeat model runs changed silent→delivered HEARTBEAT_OK→silent through the QA channel; the running account restarted and the manually stopped account stayed stopped",
+          "Real heartbeat model runs changed silent→delivered PULSE_ACK→silent through the QA channel; the running account restarted and the manually stopped account stayed stopped",
         );
       });
       await proveHotReloadChannelPolicy({

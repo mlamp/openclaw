@@ -1268,7 +1268,7 @@ describe("session history HTTP endpoints", () => {
       { message: assistantMessage("Second reply.", "gateway-injected") },
       { message: assistantMessage("Third reply.", "acp-runtime") },
       { message: { role: "user", content: HEARTBEAT_PROMPT } },
-      { message: { role: "assistant", content: "HEARTBEAT_OK" } },
+      { message: { role: "assistant", content: "PULSE_ACK" } },
       { message: assistantMessage("Third reply.", "gateway-injected") },
     ]);
 

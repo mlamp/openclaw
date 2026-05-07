@@ -648,7 +648,7 @@ describe("chat.history cursor catch-up", () => {
         const acknowledged = await appendTranscriptMessage(currentScope(storePath), {
           eventId: "heartbeat-ok",
           parentId: heartbeat?.messageId,
-          message: { role: "assistant", content: "HEARTBEAT_OK", timestamp: 3 },
+          message: { role: "assistant", content: "PULSE_ACK", timestamp: 3 },
         });
         await appendTranscriptMessage(currentScope(storePath), {
           eventId: "after-heartbeat",

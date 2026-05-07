@@ -51,7 +51,7 @@ describe("session activity assistant buffering", () => {
     expect(state.notes.at(-1)?.text).toBe("Assistant: visible after");
   });
 
-  it.each(["HEARTBEAT_OK", "NO_REPLY"])(
+  it.each(["PULSE_ACK", "NO_REPLY"])(
     "does not record the internal acknowledgement %s as assistant activity",
     (acknowledgement) => {
       const state = createSessionActivityNoteState();

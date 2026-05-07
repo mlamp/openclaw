@@ -471,7 +471,7 @@ describe("mergeOrphanedTrailingUserPrompt", () => {
   it("merges orphan prompt text for non-user triggers without warning policy changes", () => {
     expect(
       mergeOrphanedTrailingUserPrompt({
-        prompt: "HEARTBEAT_OK",
+        prompt: "PULSE_ACK",
         trigger: "heartbeat",
         leafMessage: {
           content: "older active-turn message",
@@ -482,7 +482,7 @@ describe("mergeOrphanedTrailingUserPrompt", () => {
       removeLeaf: false,
       prompt:
         "[Queued user message from a previous active turn; preserved as context only. Continue with the active prompt below.]\n" +
-        "older active-turn message\n\nHEARTBEAT_OK",
+        "older active-turn message\n\nPULSE_ACK",
     });
   });
 });

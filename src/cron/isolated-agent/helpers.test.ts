@@ -46,7 +46,7 @@ describe("text payload pickers", () => {
 });
 
 describe("cron delivery outcomes", () => {
-  it.each(["NO_REPLY", "HEARTBEAT_OK"])(
+  it.each(["NO_REPLY", "PULSE_ACK"])(
     "keeps %s as a silent heartbeat acknowledgement",
     (acknowledgement) => {
       expect(

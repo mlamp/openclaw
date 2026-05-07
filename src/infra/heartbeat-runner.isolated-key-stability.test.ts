@@ -58,7 +58,7 @@ describe("runHeartbeatOnce – isolated session key stability (#59493)", () => {
     });
 
     const replySpy = vi.spyOn(replyModule, "getReplyFromConfig");
-    replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+    replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
     await runHeartbeatOnce({
       cfg: params.cfg,
@@ -128,7 +128,7 @@ describe("runHeartbeatOnce – isolated session key stability (#59493)", () => {
         heartbeatIsolatedBaseSessionKey: baseSessionKey,
       });
       const replySpy = vi.spyOn(replyModule, "getReplyFromConfig");
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       await runHeartbeatOnce({
         cfg,
@@ -176,7 +176,7 @@ describe("runHeartbeatOnce – isolated session key stability (#59493)", () => {
         lastTo: "+1555",
       });
       const replySpy = vi.spyOn(replyModule, "getReplyFromConfig");
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       const result = await runHeartbeatOnce({
         cfg,
@@ -257,7 +257,7 @@ describe("runHeartbeatOnce – isolated session key stability (#59493)", () => {
       const replySpy = vi.spyOn(replyModule, "getReplyFromConfig");
       replySpy
         .mockResolvedValueOnce({ text: "Relay this cron update now" })
-        .mockResolvedValueOnce({ text: "HEARTBEAT_OK" });
+        .mockResolvedValueOnce({ text: "PULSE_ACK" });
 
       enqueueSystemEvent("Cron: memory maintenance completed", {
         sessionKey: baseSessionKey,
@@ -312,7 +312,7 @@ describe("runHeartbeatOnce – isolated session key stability (#59493)", () => {
         heartbeatIsolatedBaseSessionKey: baseSessionKey,
       });
       const replySpy = vi.spyOn(replyModule, "getReplyFromConfig");
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       await runHeartbeatOnce({
         cfg,
@@ -393,7 +393,7 @@ describe("runHeartbeatOnce – isolated session key stability (#59493)", () => {
       });
 
       const replySpy = vi.spyOn(replyModule, "getReplyFromConfig");
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       await runHeartbeatOnce({
         cfg,
@@ -446,7 +446,7 @@ describe("runHeartbeatOnce – isolated session key stability (#59493)", () => {
         },
       });
       const replySpy = vi.spyOn(replyModule, "getReplyFromConfig");
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       const result = await runHeartbeatOnce({
         cfg,
@@ -482,7 +482,7 @@ describe("runHeartbeatOnce – isolated session key stability (#59493)", () => {
         lastTo: "+1555",
       });
       const replySpy = vi.spyOn(replyModule, "getReplyFromConfig");
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       const result = await runHeartbeatOnce({
         cfg,
@@ -520,7 +520,7 @@ describe("runHeartbeatOnce – isolated session key stability (#59493)", () => {
         lastTo: "+1555",
       });
       const replySpy = vi.spyOn(replyModule, "getReplyFromConfig");
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       await runHeartbeatOnce({
         cfg,

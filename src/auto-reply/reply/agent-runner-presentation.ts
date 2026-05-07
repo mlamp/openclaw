@@ -44,11 +44,11 @@ export function createAgentTurnPresentation(params: {
     if (params.turn.followupRun.run.silentExpected) {
       return { skip: true };
     }
-    if (!params.turn.isHeartbeat && text?.includes("HEARTBEAT_OK")) {
+    if (!params.turn.isHeartbeat && text?.includes("PULSE_ACK")) {
       const stripped = stripHeartbeatToken(text, { mode: "message" });
       if (stripped.didStrip && !params.heartbeatState.didLogStrip) {
         params.heartbeatState.didLogStrip = true;
-        logVerbose("Stripped stray HEARTBEAT_OK token from reply");
+        logVerbose("Stripped stray PULSE_ACK token from reply");
       }
       if (stripped.shouldSkip && !reply.hasMedia) {
         return { skip: true };

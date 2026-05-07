@@ -40,7 +40,7 @@ function mockReplyWithSystemEvents(replySpy: HeartbeatReplySpy, cfg: OpenClawCon
         events: eventContext?.events ?? [],
       }),
     );
-    return { text: "HEARTBEAT_OK" };
+    return { text: "PULSE_ACK" };
   });
   return blocks;
 }
@@ -232,7 +232,7 @@ describe("runHeartbeatOnce identity", () => {
 
   it.each([
     { name: "alert", replyText: "needs attention", showOk: false },
-    { name: "heartbeat ok", replyText: "HEARTBEAT_OK", showOk: true },
+    { name: "heartbeat ok", replyText: "PULSE_ACK", showOk: true },
   ])("forwards agent identity on $name delivery", async ({ replyText, showOk }) => {
     await withTempHeartbeatSandbox(async ({ tmpDir, storePath, replySpy }) => {
       const cfg: OpenClawConfig = {

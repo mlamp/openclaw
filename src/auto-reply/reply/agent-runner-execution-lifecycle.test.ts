@@ -919,7 +919,7 @@ describe("executeAgentTurn: run lifecycle and ownership", () => {
       attempts: [],
     }));
     state.runEmbeddedAgentMock.mockResolvedValueOnce({
-      payloads: [{ text: "HEARTBEAT_OK" }],
+      payloads: [{ text: "PULSE_ACK" }],
       meta: {},
     });
 
