@@ -962,7 +962,7 @@ export function buildAgentSystemPrompt(params: {
 
   // For "none" mode, return just the basic identity line
   if (promptMode === "none") {
-    return ["You are a personal assistant running inside OpenClaw.", modelIdentityLine]
+    return ["You are a personal assistant.", modelIdentityLine]
       .filter(Boolean)
       .join("\n");
   }
@@ -1023,7 +1023,7 @@ export function buildAgentSystemPrompt(params: {
   });
   const stablePrefix = cacheStablePromptPrefix(stablePrefixCacheKey, () => {
     const lines = [
-      "You are a personal assistant running inside OpenClaw.",
+      "You are a personal assistant.",
       "",
       "## Tooling",
       "Available tools are policy-filtered. Names are case-sensitive; call exactly as listed.",
