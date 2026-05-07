@@ -13,7 +13,7 @@ export type HeartbeatTask = {
 // Keep it tight and avoid encouraging the model to invent/rehash "open loops" from prior chat context.
 const HEARTBEAT_CONTEXT_PROMPT =
   "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly. Do not infer or repeat old tasks from prior chats.";
-export const HEARTBEAT_PROMPT = `${HEARTBEAT_CONTEXT_PROMPT} If nothing needs attention, reply HEARTBEAT_OK.`;
+export const HEARTBEAT_PROMPT = `${HEARTBEAT_CONTEXT_PROMPT} If nothing needs attention, reply ${HEARTBEAT_TOKEN}.`;
 export const HEARTBEAT_RESPONSE_TOOL_INSTRUCTIONS =
   "Use heartbeat_respond to report the wake outcome. Set notify=false when nothing needs the user's attention. Set notify=true with notificationText only when the user should be interrupted.";
 export const HEARTBEAT_RESPONSE_TOOL_PROMPT = `${HEARTBEAT_CONTEXT_PROMPT} ${HEARTBEAT_RESPONSE_TOOL_INSTRUCTIONS}`;
