@@ -78,7 +78,7 @@ describe("heartbeat transcript append-only (#39609)", () => {
 
         const finalSize = (await fs.stat(transcriptPath)).size;
         // Transcript must never be truncated — entries are append-only now.
-        // HEARTBEAT_OK entries stay in the file and are filtered at context
+        // PULSE_ACK entries stay in the file and are filtered at context
         // build time instead of being removed via fs.truncate (#39609).
         expect(finalSize).toBeGreaterThanOrEqual(originalSize);
       },
@@ -86,11 +86,11 @@ describe("heartbeat transcript append-only (#39609)", () => {
     );
   }
 
-  it("does not truncate transcript when heartbeat returns HEARTBEAT_OK", async () => {
+  it("does not truncate transcript when heartbeat returns PULSE_ACK", async () => {
     await runTranscriptScenario({
       sessionId: "test-session-no-prune",
       reply: {
-        text: "HEARTBEAT_OK",
+        text: "PULSE_ACK",
         usage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 },
       },
     });

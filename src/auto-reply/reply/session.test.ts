@@ -4416,7 +4416,7 @@ describe("initSessionState internal channel routing preservation", () => {
 
     const result = await initSessionState({
       ctx: {
-        Body: "HEARTBEAT_OK",
+        Body: "PULSE_ACK",
         SessionKey: sessionKey,
         Provider: "heartbeat",
         From: "heartbeat",

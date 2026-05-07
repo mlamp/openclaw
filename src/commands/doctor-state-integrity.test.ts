@@ -547,7 +547,7 @@ describe("doctor state integrity oauth dir checks", () => {
       path.join(sessionsDir, "heartbeat-session.jsonl"),
       [
         JSON.stringify({ message: { role: "user", content: HEARTBEAT_TRANSCRIPT_PROMPT } }),
-        JSON.stringify({ message: { role: "assistant", content: "HEARTBEAT_OK" } }),
+        JSON.stringify({ message: { role: "assistant", content: "PULSE_ACK" } }),
         "",
       ].join("\n"),
     );
@@ -609,7 +609,7 @@ describe("doctor state integrity oauth dir checks", () => {
       path.join(sessionsDir, "mixed-session.jsonl"),
       [
         JSON.stringify({ message: { role: "user", content: HEARTBEAT_TRANSCRIPT_PROMPT } }),
-        JSON.stringify({ message: { role: "assistant", content: "HEARTBEAT_OK" } }),
+        JSON.stringify({ message: { role: "assistant", content: "PULSE_ACK" } }),
         JSON.stringify({ message: { role: "user", content: "hello from telegram" } }),
         "",
       ].join("\n"),
@@ -740,7 +740,7 @@ describe("doctor state integrity oauth dir checks", () => {
         transcriptPath,
         [
           JSON.stringify({ message: { role: "user", content: HEARTBEAT_TRANSCRIPT_PROMPT } }),
-          JSON.stringify({ message: { role: "assistant", content: "HEARTBEAT_OK" } }),
+          JSON.stringify({ message: { role: "assistant", content: "PULSE_ACK" } }),
           "",
         ].join("\n"),
       );

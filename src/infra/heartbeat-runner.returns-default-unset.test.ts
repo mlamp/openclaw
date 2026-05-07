@@ -1248,9 +1248,9 @@ describe("runHeartbeatOnce", () => {
         expectedTexts: ["Thinking\n\n_Because it helps_", "Final alert"],
       },
       {
-        name: "raw flagged reasoning + HEARTBEAT_OK",
+        name: "raw flagged reasoning + PULSE_ACK",
         caseDir: "hb-reasoning-heartbeat-ok",
-        replies: [{ text: "Because it helps", isReasoning: true }, { text: "HEARTBEAT_OK" }],
+        replies: [{ text: "Because it helps", isReasoning: true }, { text: "PULSE_ACK" }],
         expectedTexts: ["Thinking\n\n_Because it helps_"],
       },
       {

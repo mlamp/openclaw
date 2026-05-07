@@ -498,7 +498,7 @@ describe("qa mock openai server", () => {
       output: Array<{ content?: Array<{ text?: string }> }>;
     }>(server, {
       stream: false,
-      instructions: "If this is a heartbeat check, reply exactly: HEARTBEAT_OK",
+      instructions: "If this is a heartbeat check, reply exactly: PULSE_ACK",
       input: [
         makeUserInput("Read QA_KICKOFF_TASK.md, then summarize what you found."),
         {
@@ -511,7 +511,7 @@ describe("qa mock openai server", () => {
 
     const text = final.output[0]?.content?.[0]?.text ?? "";
     expect(text).toContain("Protocol note: I reviewed the requested material.");
-    expect(text).not.toContain("HEARTBEAT_OK");
+    expect(text).not.toContain("PULSE_ACK");
   });
 
   it("requires deterministic tool-progress error prompts to observe a failed tool", async () => {
@@ -2635,7 +2635,7 @@ describe("qa mock openai server", () => {
             content: [
               {
                 type: "input_text",
-                text: "System: Gateway restart config-apply ok\nSystem: QA-SUBAGENT-RECOVERY-1234\n\nRead HEARTBEAT.md if it exists (workspace context). Follow it strictly. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply HEARTBEAT_OK.",
+                text: "System: Gateway restart config-apply ok\nSystem: QA-SUBAGENT-RECOVERY-1234\n\nRead HEARTBEAT.md if it exists (workspace context). Follow it strictly. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply PULSE_ACK.",
               },
             ],
           },
@@ -2644,7 +2644,7 @@ describe("qa mock openai server", () => {
     });
 
     expect(response.status).toBe(200);
-    expect(outputText(await response.json())).toBe("HEARTBEAT_OK");
+    expect(outputText(await response.json())).toBe("PULSE_ACK");
   });
 
   it("returns exact markers for visible and hot-installed skills", async () => {
@@ -4170,7 +4170,7 @@ describe("qa mock openai server", () => {
         system: [
           {
             type: "text",
-            text: "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly. If nothing needs attention, reply HEARTBEAT_OK.",
+            text: "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly. If nothing needs attention, reply PULSE_ACK.",
           },
         ],
         messages: [
@@ -4190,7 +4190,7 @@ describe("qa mock openai server", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("Remembered ALPHA-7.");
-    expect(body).not.toContain("HEARTBEAT_OK");
+    expect(body).not.toContain("PULSE_ACK");
     expect(body).not.toContain('"name":"read"');
   });
 
@@ -4216,7 +4216,7 @@ describe("qa mock openai server", () => {
             text: [
               "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly.",
               "If the current user message is a heartbeat poll and nothing needs attention, reply exactly:",
-              "HEARTBEAT_OK",
+              "PULSE_ACK",
             ].join("\n"),
           },
         ],
@@ -4237,7 +4237,7 @@ describe("qa mock openai server", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("Remembered ALPHA-7.");
-    expect(body).not.toContain("HEARTBEAT_OK");
+    expect(body).not.toContain("PULSE_ACK");
   });
 
   it("rejects malformed Anthropic /v1/messages JSON with an invalid_request_error", async () => {

@@ -158,8 +158,8 @@ describe("isHeartbeatOnlyResponse", () => {
     expect(isHeartbeatOnlyResponse([], ACK_MAX)).toBe(true);
   });
 
-  it("returns true for a single HEARTBEAT_OK payload", () => {
-    expect(isHeartbeatOnlyResponse([{ text: "HEARTBEAT_OK" }], ACK_MAX)).toBe(true);
+  it("returns true for a single PULSE_ACK payload", () => {
+    expect(isHeartbeatOnlyResponse([{ text: "PULSE_ACK" }], ACK_MAX)).toBe(true);
   });
 
   it("returns false for a single non-heartbeat payload", () => {
@@ -168,35 +168,35 @@ describe("isHeartbeatOnlyResponse", () => {
     );
   });
 
-  it("returns true when multiple payloads include narration followed by HEARTBEAT_OK", () => {
+  it("returns true when multiple payloads include narration followed by PULSE_ACK", () => {
     // Agent narrates its work then signals nothing needs attention.
     expect(
       isHeartbeatOnlyResponse(
         [
           { text: "It's 12:49 AM — quiet hours. Let me run the checks quickly." },
           { text: "Emails: Just 2 calendar invites. Not urgent." },
-          { text: "HEARTBEAT_OK" },
+          { text: "PULSE_ACK" },
         ],
         ACK_MAX,
       ),
     ).toBe(true);
   });
 
-  it("returns false when media is present even with HEARTBEAT_OK text", () => {
+  it("returns false when media is present even with PULSE_ACK text", () => {
     expect(
       isHeartbeatOnlyResponse(
-        [{ text: "HEARTBEAT_OK", mediaUrl: "https://example.com/img.png" }],
+        [{ text: "PULSE_ACK", mediaUrl: "https://example.com/img.png" }],
         ACK_MAX,
       ),
     ).toBe(false);
   });
 
-  it("returns false when rich content is present even with HEARTBEAT_OK text", () => {
+  it("returns false when rich content is present even with PULSE_ACK text", () => {
     expect(
       isHeartbeatOnlyResponse(
         [
           {
-            text: "HEARTBEAT_OK",
+            text: "PULSE_ACK",
             presentation: {
               blocks: [{ type: "buttons", buttons: [{ label: "Open", value: "open" }] }],
             },
@@ -207,11 +207,11 @@ describe("isHeartbeatOnlyResponse", () => {
     ).toBe(false);
   });
 
-  it("returns false when media is in a different payload than HEARTBEAT_OK", () => {
+  it("returns false when media is in a different payload than PULSE_ACK", () => {
     expect(
       isHeartbeatOnlyResponse(
         [
-          { text: "HEARTBEAT_OK" },
+          { text: "PULSE_ACK" },
           { text: "Here's an image", mediaUrl: "https://example.com/img.png" },
         ],
         ACK_MAX,
@@ -219,7 +219,7 @@ describe("isHeartbeatOnlyResponse", () => {
     ).toBe(false);
   });
 
-  it("returns false when no payload contains HEARTBEAT_OK", () => {
+  it("returns false when no payload contains PULSE_ACK", () => {
     expect(
       isHeartbeatOnlyResponse(
         [{ text: "Checked emails — found 3 urgent messages from your manager." }],

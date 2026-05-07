@@ -3867,7 +3867,7 @@ describe("agent event handler", () => {
       stream: "assistant",
       ts: Date.now(),
       data: {
-        text: "HEARTBEAT_OK Read HEARTBEAT.md if it exists (workspace context). Follow it strictly.",
+        text: "PULSE_ACK Read HEARTBEAT.md if it exists (workspace context). Follow it strictly.",
       },
     });
 
@@ -3903,7 +3903,7 @@ describe("agent event handler", () => {
       stream: "assistant",
       ts: Date.now(),
       data: {
-        text: "HEARTBEAT_OK Disk usage crossed 95 percent on /data and needs cleanup now.",
+        text: "PULSE_ACK Disk usage crossed 95 percent on /data and needs cleanup now.",
       },
     });
 

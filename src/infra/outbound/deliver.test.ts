@@ -2156,7 +2156,7 @@ describe("deliverOutboundPayloads", () => {
       },
       channel: "matrix",
       to: "!explicit:example",
-      payloads: [{ text: "HEARTBEAT_OK", mediaUrl: "https://example.com/img.png" }],
+      payloads: [{ text: "PULSE_ACK", mediaUrl: "https://example.com/img.png" }],
       skipQueue: true,
     });
 
@@ -2175,7 +2175,7 @@ describe("deliverOutboundPayloads", () => {
       >
     )[0]?.[0];
     expect(sendMediaOptions?.to).toBe("!explicit:example");
-    expect(sendMediaOptions?.text).toBe("HEARTBEAT_OK");
+    expect(sendMediaOptions?.text).toBe("PULSE_ACK");
     expect(sendMediaOptions?.mediaUrl).toBe("https://example.com/img.png");
     expect(sendMediaOptions?.accountId).toBeUndefined();
   });

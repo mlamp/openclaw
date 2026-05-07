@@ -2360,7 +2360,7 @@ describe("compaction-safeguard double-compaction guard", () => {
           content: [{ type: "text", text: "done" }],
         } as AgentMessage,
         [
-          { role: "user", content: "<b>HEARTBEAT_OK</b>" } as AgentMessage,
+          { role: "user", content: "<b>PULSE_ACK</b>" } as AgentMessage,
           {
             role: "toolResult",
             toolCallId: "t1",
@@ -2424,7 +2424,7 @@ describe("compaction-safeguard double-compaction guard", () => {
       testing.hasMeaningfulConversationContent(
         castAgentMessage({
           role: "assistant",
-          content: "<b>HEARTBEAT_OK</b>",
+          content: "<b>PULSE_ACK</b>",
         }),
       ),
     ).toBe(false);

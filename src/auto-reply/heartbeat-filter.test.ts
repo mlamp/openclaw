@@ -29,7 +29,7 @@ describe("isHeartbeatUserMessage", () => {
       isHeartbeatUserMessage({
         role: "user",
         content:
-          "Run the following periodic tasks (only those due based on their intervals):\n\n- email-check: Check for urgent unread emails\n\nAfter completing all due tasks, reply HEARTBEAT_OK.",
+          "Run the following periodic tasks (only those due based on their intervals):\n\n- email-check: Check for urgent unread emails\n\nAfter completing all due tasks, reply PULSE_ACK.",
       }),
     ).toBe(true);
 
@@ -63,14 +63,14 @@ describe("isHeartbeatUserMessage", () => {
     expect(
       isHeartbeatUserMessage({
         role: "user",
-        content: "Please reply HEARTBEAT_OK so I can test something.",
+        content: "Please reply PULSE_ACK so I can test something.",
       }),
     ).toBe(false);
 
     expect(
       isHeartbeatUserMessage({
         role: "assistant",
-        content: "HEARTBEAT_OK",
+        content: "PULSE_ACK",
       }),
     ).toBe(false);
   });
@@ -81,14 +81,14 @@ describe("isHeartbeatOkResponse", () => {
     expect(
       isHeartbeatOkResponse({
         role: "assistant",
-        content: "**HEARTBEAT_OK**",
+        content: "**PULSE_ACK**",
       }),
     ).toBe(true);
 
     expect(
       isHeartbeatOkResponse({
         role: "assistant",
-        content: "You have 3 unread urgent emails. HEARTBEAT_OK",
+        content: "You have 3 unread urgent emails. PULSE_ACK",
       }),
     ).toBe(true);
   });
@@ -97,7 +97,7 @@ describe("isHeartbeatOkResponse", () => {
     expect(
       isHeartbeatOkResponse({
         role: "assistant",
-        content: "Status HEARTBEAT_OK due to watchdog failure",
+        content: "Status PULSE_ACK due to watchdog failure",
       }),
     ).toBe(false);
 
@@ -129,7 +129,7 @@ describe("isHeartbeatOkResponse", () => {
       isHeartbeatOkResponse(
         {
           role: "assistant",
-          content: "HEARTBEAT_OK all good",
+          content: "PULSE_ACK all good",
         },
         0,
       ),
@@ -143,9 +143,9 @@ describe("filterHeartbeatTranscriptArtifacts", () => {
       { role: "user", content: "Hello" },
       { role: "assistant", content: "Hi there!" },
       { role: "user", content: HEARTBEAT_PROMPT },
-      { role: "assistant", content: "HEARTBEAT_OK" },
+      { role: "assistant", content: "PULSE_ACK" },
       { role: "user", content: HEARTBEAT_TRANSCRIPT_PROMPT },
-      { role: "assistant", content: "HEARTBEAT_OK" },
+      { role: "assistant", content: "PULSE_ACK" },
       { role: "user", content: "What time is it?" },
       { role: "assistant", content: "It is 3pm." },
     ];
@@ -921,7 +921,7 @@ describe("filterHeartbeatTranscriptArtifacts", () => {
   it("preserves meaningful heartbeat output without terminal artifacts", () => {
     const meaningfulMessages = [
       { role: "user", content: HEARTBEAT_PROMPT },
-      { role: "assistant", content: "Status HEARTBEAT_OK due to watchdog failure" },
+      { role: "assistant", content: "Status PULSE_ACK due to watchdog failure" },
     ];
     expect(
       filterHeartbeatTranscriptArtifacts(meaningfulMessages, undefined, HEARTBEAT_PROMPT),
@@ -981,8 +981,8 @@ describe("filterHeartbeatTranscriptArtifacts", () => {
 
   it("keeps ordinary chats that mention the token", () => {
     const messages = [
-      { role: "user", content: "Please reply HEARTBEAT_OK so I can test something." },
-      { role: "assistant", content: "HEARTBEAT_OK" },
+      { role: "user", content: "Please reply PULSE_ACK so I can test something." },
+      { role: "assistant", content: "PULSE_ACK" },
     ];
 
     expect(filterHeartbeatTranscriptArtifacts(messages, undefined, HEARTBEAT_PROMPT)).toEqual(

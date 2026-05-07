@@ -58,8 +58,8 @@ async function runScheduledCron(cron: CronService): Promise<void> {
   cron.stop();
 }
 
-describe("cron isolated job HEARTBEAT_OK summary suppression (#32013)", () => {
-  it("does not enqueue HEARTBEAT_OK as a system event to the main session", async () => {
+describe("cron isolated job PULSE_ACK summary suppression (#32013)", () => {
+  it("does not enqueue PULSE_ACK as a system event to the main session", async () => {
     const { storePath } = await makeStorePath();
     const now = Date.now();
 
@@ -75,14 +75,14 @@ describe("cron isolated job HEARTBEAT_OK summary suppression (#32013)", () => {
     const requestHeartbeat = vi.fn();
     const cron = createCronServiceForSummary({
       storePath,
-      summary: "HEARTBEAT_OK",
+      summary: "PULSE_ACK",
       enqueueSystemEvent,
       requestHeartbeat,
     });
 
     await runScheduledCron(cron);
 
-    // HEARTBEAT_OK should NOT leak into the main session as a system event.
+    // PULSE_ACK should NOT leak into the main session as a system event.
     expect(enqueueSystemEvent).not.toHaveBeenCalled();
     expect(requestHeartbeat).not.toHaveBeenCalled();
   });

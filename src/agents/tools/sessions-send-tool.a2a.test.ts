@@ -290,7 +290,7 @@ describe("runSessionsSendA2AFlow announce delivery", () => {
     expect(sendParams.accountId).toBe(accountId);
   });
 
-  it.each(["NO_REPLY", "HEARTBEAT_OK", "ANNOUNCE_SKIP", "REPLY_SKIP"])(
+  it.each(["NO_REPLY", "PULSE_ACK", "ANNOUNCE_SKIP", "REPLY_SKIP"])(
     "does not re-inject exact control reply %s into agent-to-agent flow",
     async (roundOneReply) => {
       await runSessionsSendA2AFlow({
@@ -339,7 +339,7 @@ describe("runSessionsSendA2AFlow announce delivery", () => {
     expect(gatewayCalls.find((call) => call.method === "send")).toBeUndefined();
   });
 
-  it.each(["NO_REPLY", "HEARTBEAT_OK", "ANNOUNCE_SKIP"])(
+  it.each(["NO_REPLY", "PULSE_ACK", "ANNOUNCE_SKIP"])(
     "suppresses exact announce control reply %s before channel delivery",
     async (announceReply) => {
       vi.mocked(runAgentStep).mockResolvedValueOnce(announceReply);

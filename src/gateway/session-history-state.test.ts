@@ -548,7 +548,7 @@ describe("SessionHistorySseState", () => {
           content: `${HEARTBEAT_PROMPT}\nWhen reading HEARTBEAT.md, use workspace file /tmp/HEARTBEAT.md (exact case). Do not read docs/heartbeat.md.`,
           __openclaw: { seq: 1 },
         },
-        assistantTextMessage("HEARTBEAT_OK", 2),
+        assistantTextMessage("PULSE_ACK", 2),
         {
           role: "user",
           content: HEARTBEAT_PROMPT,
@@ -573,7 +573,7 @@ describe("SessionHistorySseState", () => {
         },
       }),
     ).toBeNull();
-    expect(appendAssistantText(state, "HEARTBEAT_OK")).toBeNull();
+    expect(appendAssistantText(state, "PULSE_ACK")).toBeNull();
     expect(
       state.appendInlineMessage({
         message: {

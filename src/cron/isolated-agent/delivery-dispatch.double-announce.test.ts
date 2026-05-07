@@ -1117,7 +1117,7 @@ describe("dispatchCronDelivery — double-announce guard", () => {
   });
 
   it("cleans up the direct cron session after text delivery when deleteAfterRun is enabled", async () => {
-    const params = makeBaseParams({ synthesizedText: "HEARTBEAT_OK 🦞" });
+    const params = makeBaseParams({ synthesizedText: "PULSE_ACK 🦞" });
     params.agentSessionKey = "agent:main:cron:test-job";
     (params.job as { deleteAfterRun?: boolean }).deleteAfterRun = true;
 
@@ -1666,7 +1666,7 @@ describe("dispatchCronDelivery — double-announce guard", () => {
   });
 
   it("delivers structured heartbeat/media payloads once through the outbound adapter", async () => {
-    const params = makeBaseParams({ synthesizedText: "HEARTBEAT_OK" });
+    const params = makeBaseParams({ synthesizedText: "PULSE_ACK" });
     params.cfgWithAgentDefaults = {
       channels: {
         telegram: {
@@ -1676,7 +1676,7 @@ describe("dispatchCronDelivery — double-announce guard", () => {
     } as never;
     params.deliveryPayloadHasStructuredContent = true;
     params.deliveryPayloads = [
-      { text: "HEARTBEAT_OK", mediaUrl: "https://example.com/img.png" },
+      { text: "PULSE_ACK", mediaUrl: "https://example.com/img.png" },
     ] as never;
 
     const state = await dispatchCronDelivery(params);
@@ -1687,22 +1687,22 @@ describe("dispatchCronDelivery — double-announce guard", () => {
     expectDeliveryCall(0, {
       channel: "telegram",
       to: "123456",
-      payloads: [{ text: "HEARTBEAT_OK", mediaUrl: "https://example.com/img.png" }],
+      payloads: [{ text: "PULSE_ACK", mediaUrl: "https://example.com/img.png" }],
     });
     expect(appendAssistantMessageToSessionTranscript).toHaveBeenCalledWith(
       expect.objectContaining({
-        text: "HEARTBEAT_OK\nimg.png",
+        text: "PULSE_ACK\nimg.png",
         mediaUrls: undefined,
       }),
     );
   });
 
   it("cleans up the direct cron session after structured direct delivery when deleteAfterRun is enabled", async () => {
-    const params = makeBaseParams({ synthesizedText: "HEARTBEAT_OK" });
+    const params = makeBaseParams({ synthesizedText: "PULSE_ACK" });
     params.agentSessionKey = "agent:main:cron:test-job";
     params.deliveryPayloadHasStructuredContent = true;
     params.deliveryPayloads = [
-      { text: "HEARTBEAT_OK", mediaUrl: "https://example.com/img.png" },
+      { text: "PULSE_ACK", mediaUrl: "https://example.com/img.png" },
     ] as never;
     (params.job as { deleteAfterRun?: boolean }).deleteAfterRun = true;
 

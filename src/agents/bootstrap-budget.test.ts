@@ -148,7 +148,7 @@ describe("bootstrap prompt warnings", () => {
   });
 
   it("preserves exact heartbeat prompts without warning suffixes", () => {
-    const heartbeatPrompt = "Read HEARTBEAT.md. Reply HEARTBEAT_OK.";
+    const heartbeatPrompt = "Read HEARTBEAT.md. Reply PULSE_ACK.";
 
     expect(
       appendBootstrapPromptWarning(heartbeatPrompt, ["AGENTS.md: 200 raw -> 0 injected"], {

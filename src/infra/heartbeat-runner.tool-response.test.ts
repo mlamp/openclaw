@@ -204,7 +204,7 @@ describe("runHeartbeatOnce heartbeat response tool", () => {
       expect(result.calledCtx.Body).toContain(text);
     }
     expect(result.calledCtx.Body).toContain("heartbeat_respond");
-    expect(result.calledCtx.Body).not.toContain("HEARTBEAT_OK");
+    expect(result.calledCtx.Body).not.toContain("PULSE_ACK");
     expect(result.calledOpts.enableHeartbeatTool).toBe(true);
     expect(result.calledOpts.forceHeartbeatTool).toBe(true);
     expect(result.calledOpts.sourceReplyDeliveryMode).toBe("message_tool_only");
@@ -376,7 +376,7 @@ describe("runHeartbeatOnce heartbeat response tool", () => {
       },
     });
 
-    expect(result.calledCtx.Body).toContain("HEARTBEAT_OK");
+    expect(result.calledCtx.Body).toContain("PULSE_ACK");
     expect(result.calledCtx.Body).not.toContain("heartbeat_respond");
     expect(result.calledOpts.sourceReplyDeliveryMode).toBeUndefined();
   });
@@ -436,7 +436,7 @@ describe("runHeartbeatOnce heartbeat response tool", () => {
 
       const calledCtx = replyContext(replySpy);
       const calledOpts = replyOptions(replySpy);
-      expect(calledCtx.Body).toContain("HEARTBEAT_OK");
+      expect(calledCtx.Body).toContain("PULSE_ACK");
       expect(calledCtx.Body).not.toContain("heartbeat_respond");
       expect(calledOpts.enableHeartbeatTool).toBeUndefined();
       expect(calledOpts.forceHeartbeatTool).toBeUndefined();

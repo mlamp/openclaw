@@ -197,14 +197,14 @@ export async function buildReplyPayloads(params: {
         text = formatBunFetchSocketError(text);
       }
 
-      if (!text || !text.includes("HEARTBEAT_OK")) {
+      if (!text || !text.includes("PULSE_ACK")) {
         sanitizedPayloads.push(copyPayloadWithSanitizedText(payload, text));
         continue;
       }
       const stripped = stripHeartbeatToken(text, { mode: "message" });
       if (stripped.didStrip && !didLogHeartbeatStrip) {
         didLogHeartbeatStrip = true;
-        logVerbose("Stripped stray HEARTBEAT_OK token from reply");
+        logVerbose("Stripped stray PULSE_ACK token from reply");
       }
       const hasMedia = resolveSendableOutboundReplyParts(payload).hasMedia;
       if (stripped.shouldSkip && !hasMedia) {

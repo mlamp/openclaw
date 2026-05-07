@@ -13,7 +13,7 @@ import { MESSAGE_TOOL_DELIVERY_HINTS } from "./reply/delivery-hints.js";
 
 const HEARTBEAT_TASK_PROMPT_PREFIX =
   "Run the following periodic tasks (only those due based on their intervals):";
-const HEARTBEAT_TASK_PROMPT_ACK = "After completing all due tasks, reply HEARTBEAT_OK.";
+const HEARTBEAT_TASK_PROMPT_ACK = "After completing all due tasks, reply PULSE_ACK.";
 const TOOL_CALL_BLOCK_TYPES = new Set([
   "toolCall",
   "functionCall",

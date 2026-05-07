@@ -142,12 +142,12 @@ describe("buildChatItems", () => {
     expect(groups[0].messages[0].duplicateCount).toBe(3);
   });
 
-  it("suppresses assistant HEARTBEAT_OK acknowledgements before rendering history", () => {
+  it("suppresses assistant PULSE_ACK acknowledgements before rendering history", () => {
     const groups = messageGroups({
       messages: [
-        { role: "assistant", content: [{ type: "text", text: "HEARTBEAT_OK" }], timestamp: 1 },
-        { role: "assistant", content: "HEARTBEAT_OK", timestamp: 2 },
-        { role: "user", content: [{ type: "text", text: "HEARTBEAT_OK" }], timestamp: 3 },
+        { role: "assistant", content: [{ type: "text", text: "PULSE_ACK" }], timestamp: 1 },
+        { role: "assistant", content: "PULSE_ACK", timestamp: 2 },
+        { role: "user", content: [{ type: "text", text: "PULSE_ACK" }], timestamp: 3 },
         { role: "assistant", content: [{ type: "text", text: "Visible reply" }], timestamp: 4 },
       ],
     });
@@ -160,7 +160,7 @@ describe("buildChatItems", () => {
     ]);
   });
 
-  it("suppresses assistant HEARTBEAT_OK acknowledgements that carry hidden thinking blocks", () => {
+  it("suppresses assistant PULSE_ACK acknowledgements that carry hidden thinking blocks", () => {
     const groups = messageGroups({
       messages: [
         {
@@ -169,7 +169,7 @@ describe("buildChatItems", () => {
             { type: "thinking", thinking: "Checking scheduled work." },
             {
               type: "text",
-              text: "HEARTBEAT_OK",
+              text: "PULSE_ACK",
               textSignature: JSON.stringify({ v: 1, phase: "final_answer" }),
             },
           ],
@@ -179,7 +179,7 @@ describe("buildChatItems", () => {
           role: "assistant",
           content: [
             { id: "rs_1", type: "reasoning" },
-            { type: "text", text: "HEARTBEAT_OK" },
+            { type: "text", text: "PULSE_ACK" },
           ],
           timestamp: 2,
         },
@@ -202,13 +202,13 @@ describe("buildChatItems", () => {
     ]);
   });
 
-  it("keeps HEARTBEAT_OK turns that carry visible non-text content", () => {
+  it("keeps PULSE_ACK turns that carry visible non-text content", () => {
     const canvasBlock = createAssistantCanvasBlock({ suffix: "heartbeat_visible_content" });
     const groups = messageGroups({
       messages: [
         {
           role: "assistant",
-          content: [{ type: "text", text: "HEARTBEAT_OK" }, canvasBlock],
+          content: [{ type: "text", text: "PULSE_ACK" }, canvasBlock],
           timestamp: 1,
         },
       ],
@@ -219,10 +219,10 @@ describe("buildChatItems", () => {
     expect(canvasBlocksIn(groups[0])).toHaveLength(1);
   });
 
-  it("suppresses active HEARTBEAT_OK streams before rendering", () => {
+  it("suppresses active PULSE_ACK streams before rendering", () => {
     const items = buildChatItems(
       createProps({
-        stream: "HEARTBEAT_OK",
+        stream: "PULSE_ACK",
         streamStartedAt: 1,
       }),
     );

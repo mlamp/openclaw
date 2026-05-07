@@ -13,7 +13,7 @@ describe("shouldSkipHeartbeatOnlyDelivery", () => {
   it("suppresses when any payload is a heartbeat ack and no media is present", () => {
     expect(
       shouldSkipHeartbeatOnlyDelivery(
-        [{ text: "Checked inbox and calendar." }, { text: "HEARTBEAT_OK" }],
+        [{ text: "Checked inbox and calendar." }, { text: "PULSE_ACK" }],
         300,
       ),
     ).toBe(true);
@@ -22,7 +22,7 @@ describe("shouldSkipHeartbeatOnlyDelivery", () => {
   it("does not suppress when media is present", () => {
     expect(
       shouldSkipHeartbeatOnlyDelivery(
-        [{ text: "HEARTBEAT_OK", mediaUrl: "https://example.com/image.png" }],
+        [{ text: "PULSE_ACK", mediaUrl: "https://example.com/image.png" }],
         300,
       ),
     ).toBe(false);
@@ -46,12 +46,12 @@ describe("shouldSkipHeartbeatOnlyDelivery", () => {
 });
 
 describe("shouldEnqueueCronMainSummary", () => {
-  const isSystemEvent = (text: string) => text.includes("HEARTBEAT_OK");
+  const isSystemEvent = (text: string) => text.includes("PULSE_ACK");
 
   it("enqueues only when delivery was requested but did not run", () => {
     expect(
       shouldEnqueueCronMainSummary({
-        summaryText: "HEARTBEAT_OK",
+        summaryText: "PULSE_ACK",
         deliveryRequested: true,
         delivered: false,
         deliveryAttempted: false,
@@ -64,7 +64,7 @@ describe("shouldEnqueueCronMainSummary", () => {
   it("does not enqueue after attempted outbound delivery", () => {
     expect(
       shouldEnqueueCronMainSummary({
-        summaryText: "HEARTBEAT_OK",
+        summaryText: "PULSE_ACK",
         deliveryRequested: true,
         delivered: false,
         deliveryAttempted: true,
