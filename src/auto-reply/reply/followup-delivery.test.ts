@@ -13,7 +13,7 @@ describe("resolveFollowupDeliveryPayloads", () => {
     expect(
       resolveFollowupDeliveryPayloads({
         cfg: baseConfig,
-        payloads: [{ text: "HEARTBEAT_OK" }],
+        payloads: [{ text: "PULSE_ACK" }],
       }),
     ).toStrictEqual([]);
   });
@@ -22,7 +22,7 @@ describe("resolveFollowupDeliveryPayloads", () => {
     expect(
       resolveFollowupDeliveryPayloads({
         cfg: baseConfig,
-        payloads: [{ text: "HEARTBEAT_OK", mediaUrl: "/tmp/image.png" }],
+        payloads: [{ text: "PULSE_ACK", mediaUrl: "/tmp/image.png" }],
       }),
     ).toEqual([{ text: "", mediaUrl: "/tmp/image.png" }]);
   });

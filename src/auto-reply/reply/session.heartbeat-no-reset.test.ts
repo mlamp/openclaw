@@ -100,7 +100,7 @@ describe("initSessionState - heartbeat should not trigger session reset", () => 
     const cfg = createBaseConfig();
     const ctx = createBaseCtx({
       Provider: "heartbeat", // Heartbeat provider should NOT trigger reset
-      Body: "HEARTBEAT_OK",
+      Body: "PULSE_ACK",
     });
 
     const result = await initSessionState({
@@ -156,7 +156,7 @@ describe("initSessionState - heartbeat should not trigger session reset", () => 
 
     const ctx = createBaseCtx({
       Provider: "heartbeat",
-      Body: "HEARTBEAT_OK",
+      Body: "PULSE_ACK",
     });
 
     const result = await initSessionState({
@@ -188,7 +188,7 @@ describe("initSessionState - heartbeat should not trigger session reset", () => 
     const heartbeatResult = await initSessionState({
       ctx: createBaseCtx({
         Provider: "heartbeat",
-        Body: "HEARTBEAT_OK",
+        Body: "PULSE_ACK",
       }),
       cfg,
       commandAuthorized: true,
@@ -276,7 +276,7 @@ describe("initSessionState - heartbeat should not trigger session reset", () => 
     const heartbeatResult = await initSessionState({
       ctx: createBaseCtx({
         Provider: "heartbeat",
-        Body: "HEARTBEAT_OK",
+        Body: "PULSE_ACK",
       }),
       cfg,
       commandAuthorized: true,

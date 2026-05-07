@@ -92,12 +92,12 @@ export function buildCronEventPrompt(
     if (!deliverToUser) {
       return (
         "A scheduled cron event was triggered, but no event content was found. " +
-        "Handle this internally and reply HEARTBEAT_OK when nothing needs user-facing follow-up."
+        `Handle this internally and reply ${HEARTBEAT_TOKEN} when nothing needs user-facing follow-up.`
       );
     }
     return (
       "A scheduled cron event was triggered, but no event content was found. " +
-      "Reply HEARTBEAT_OK."
+      `Reply ${HEARTBEAT_TOKEN}.`
     );
   }
   if (!deliverToUser) {
@@ -134,7 +134,7 @@ export function buildExecEventPrompt(
     }
     return (
       "An async command completion event was triggered, but no command output was found. " +
-      "Reply HEARTBEAT_OK only. Do not mention, summarize, or reuse output from any earlier run."
+      `Reply ${HEARTBEAT_TOKEN} only. Do not mention, summarize, or reuse output from any earlier run.`
     );
   }
   if (!deliverToUser) {
@@ -147,7 +147,7 @@ export function buildExecEventPrompt(
     }
     return (
       "An async command completion event was triggered, but user delivery is disabled for this run. " +
-      "Handle the result internally and reply HEARTBEAT_OK only. Do not mention, summarize, or reuse command output."
+      `Handle the result internally and reply ${HEARTBEAT_TOKEN} only. Do not mention, summarize, or reuse command output.`
     );
   }
   if (hasMissingOutputFailure) {

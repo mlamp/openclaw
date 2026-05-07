@@ -1176,7 +1176,7 @@ describe("compactEmbeddedPiSessionDirect hooks", () => {
 
   it("skips compaction when the transcript only contains boilerplate replies and tool output", () => {
     const messages = [
-      { role: "user", content: "<b>HEARTBEAT_OK</b>", timestamp: 1 },
+      { role: "user", content: "<b>PULSE_ACK</b>", timestamp: 1 },
       {
         role: "toolResult",
         toolCallId: "t1",
@@ -1192,7 +1192,7 @@ describe("compactEmbeddedPiSessionDirect hooks", () => {
 
   it("skips compaction when the transcript only contains heartbeat boilerplate and reasoning blocks", () => {
     const messages = [
-      { role: "user", content: "<b>HEARTBEAT_OK</b>", timestamp: 1 },
+      { role: "user", content: "<b>PULSE_ACK</b>", timestamp: 1 },
       {
         role: "assistant",
         content: [{ type: "thinking", thinking: "checking" }],
@@ -1214,7 +1214,7 @@ describe("compactEmbeddedPiSessionDirect hooks", () => {
 
   it("counts tool output as real only when a meaningful user ask exists in the lookback window", () => {
     const heartbeatToolResultWindow = [
-      { role: "user", content: "<b>HEARTBEAT_OK</b>" },
+      { role: "user", content: "<b>PULSE_ACK</b>" },
       {
         role: "toolResult",
         toolCallId: "t1",

@@ -89,7 +89,7 @@ describe("runHeartbeatOnce heartbeat typing", () => {
       installHeartbeatTypingPlugin({ sendTyping, clearTyping });
       const cfg = createHeartbeatConfig({ tmpDir, storePath });
       await seedTelegramSession(storePath, cfg);
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       await runHeartbeatOnce({
         cfg,
@@ -144,7 +144,7 @@ describe("runHeartbeatOnce heartbeat typing", () => {
         session: { typingMode: "never" },
       });
       await seedTelegramSession(storePath, cfg);
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       await runHeartbeatOnce({
         cfg,
@@ -169,7 +169,7 @@ describe("runHeartbeatOnce heartbeat typing", () => {
         channelHeartbeat: { showAlerts: false, showOk: false, useIndicator: true },
       });
       await seedTelegramSession(storePath, cfg);
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       await runHeartbeatOnce({
         cfg,

@@ -49,7 +49,7 @@ export function resolveFollowupDeliveryPayloads(params: {
   const sanitizedPayloads: ReplyPayload[] = [];
   for (const payload of params.payloads) {
     const text = payload.text;
-    if (!text || !text.includes("HEARTBEAT_OK")) {
+    if (!text || !text.includes("PULSE_ACK")) {
       sanitizedPayloads.push(payload);
       continue;
     }

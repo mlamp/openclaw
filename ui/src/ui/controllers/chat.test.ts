@@ -1350,7 +1350,7 @@ describe("loadChatHistory retry handling", () => {
   it("filters heartbeat acknowledgements and internal-only user messages", async () => {
     const request = vi.fn().mockResolvedValue({
       messages: [
-        { role: "assistant", content: [{ type: "text", text: "HEARTBEAT_OK" }] },
+        { role: "assistant", content: [{ type: "text", text: "PULSE_ACK" }] },
         {
           role: "user",
           content: [

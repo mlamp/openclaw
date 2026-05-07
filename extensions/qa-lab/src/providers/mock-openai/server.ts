@@ -1067,7 +1067,7 @@ function buildAssistantText(
     return "Protocol note: I checked the available runtime context but could not confirm the hidden memory-only fact, so I will not guess.";
   }
   if (isHeartbeatPrompt(prompt)) {
-    return "HEARTBEAT_OK";
+    return "PULSE_ACK";
   }
   if (
     /roundtrip image inspection check/i.test(latestImageUserTurn.text) &&
@@ -1688,7 +1688,7 @@ async function buildResponsesPayload(
     return buildAssistantEvents(buildAssistantText(input, body, scenarioState));
   }
   if (isHeartbeatPrompt(prompt)) {
-    return buildAssistantEvents("HEARTBEAT_OK");
+    return buildAssistantEvents("PULSE_ACK");
   }
   if (/fanout worker alpha/i.test(prompt)) {
     return buildAssistantEvents("ALPHA-OK");

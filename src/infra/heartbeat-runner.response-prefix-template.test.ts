@@ -107,10 +107,10 @@ describe("runHeartbeatOnce responsePrefix templates", () => {
     expect(typeof options).toBe("object");
   });
 
-  it("uses the resolved responsePrefix when suppressing prefixed HEARTBEAT_OK replies", async () => {
+  it("uses the resolved responsePrefix when suppressing prefixed PULSE_ACK replies", async () => {
     const sendTelegram = await runTemplatedHeartbeat({
       responsePrefix: "[{model}]",
-      replyText: "[gpt-5.4] HEARTBEAT_OK all good",
+      replyText: "[gpt-5.4] PULSE_ACK all good",
     });
 
     expect(sendTelegram).not.toHaveBeenCalled();

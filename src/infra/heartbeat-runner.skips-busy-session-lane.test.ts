@@ -388,7 +388,7 @@ describe("heartbeat runner skips when target session lane is busy", () => {
       const getQueueSize = vi.fn((_lane?: string) => 0);
 
       replySpy.mockResolvedValue({
-        text: "HEARTBEAT_OK",
+        text: "PULSE_ACK",
       });
 
       const result = await runHeartbeatOnce({

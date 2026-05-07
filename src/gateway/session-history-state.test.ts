@@ -604,7 +604,7 @@ describe("SessionHistorySseState", () => {
         },
         {
           role: "assistant",
-          content: [{ type: "text", text: "HEARTBEAT_OK" }],
+          content: [{ type: "text", text: "PULSE_ACK" }],
           __openclaw: { seq: 2 },
         },
         {
@@ -654,7 +654,7 @@ describe("SessionHistorySseState", () => {
       state.appendInlineMessage({
         message: {
           role: "assistant",
-          content: [{ type: "text", text: "HEARTBEAT_OK" }],
+          content: [{ type: "text", text: "PULSE_ACK" }],
         },
       }),
     ).toBeNull();

@@ -160,22 +160,22 @@ describe("custom silent tokens", () => {
   it.each([
     {
       name: "exact-token detection",
-      check: () => isSilentReplyText("HEARTBEAT_OK", "HEARTBEAT_OK"),
+      check: () => isSilentReplyText("PULSE_ACK", "PULSE_ACK"),
       expected: true,
     },
     {
       name: "substantive text detection",
-      check: () => isSilentReplyText("Checked inbox. HEARTBEAT_OK", "HEARTBEAT_OK"),
+      check: () => isSilentReplyText("Checked inbox. PULSE_ACK", "PULSE_ACK"),
       expected: false,
     },
     {
       name: "repeated-token detection",
-      check: () => isSilentReplyText("HEARTBEAT_OK\nHEARTBEAT_OK", "HEARTBEAT_OK"),
+      check: () => isSilentReplyText("PULSE_ACK\nPULSE_ACK", "PULSE_ACK"),
       expected: true,
     },
     {
       name: "trailing token stripping",
-      check: () => stripSilentToken("done HEARTBEAT_OK", "HEARTBEAT_OK"),
+      check: () => stripSilentToken("done PULSE_ACK", "PULSE_ACK"),
       expected: "done",
     },
   ])("handles custom token for $name", ({ check, expected }) => {
@@ -211,7 +211,7 @@ describe("isSilentReplyPrefixText", () => {
     expect(isSilentReplyPrefixText("NO_")).toBe(true);
     expect(isSilentReplyPrefixText("NO_RE")).toBe(true);
     expect(isSilentReplyPrefixText("NO_REPLY")).toBe(true);
-    expect(isSilentReplyPrefixText("  HEARTBEAT_", "HEARTBEAT_OK")).toBe(true);
+    expect(isSilentReplyPrefixText("  HEARTBEAT_", "PULSE_ACK")).toBe(true);
   });
 
   it("rejects ambiguous natural-language prefixes", () => {
@@ -222,10 +222,10 @@ describe("isSilentReplyPrefixText", () => {
   });
 
   it("keeps underscore guard for non-NO_REPLY tokens", () => {
-    expect(isSilentReplyPrefixText("HE", "HEARTBEAT_OK")).toBe(false);
-    expect(isSilentReplyPrefixText("HEART", "HEARTBEAT_OK")).toBe(false);
-    expect(isSilentReplyPrefixText("HEARTBEAT", "HEARTBEAT_OK")).toBe(false);
-    expect(isSilentReplyPrefixText("HEARTBEAT_", "HEARTBEAT_OK")).toBe(true);
+    expect(isSilentReplyPrefixText("HE", "PULSE_ACK")).toBe(false);
+    expect(isSilentReplyPrefixText("HEART", "PULSE_ACK")).toBe(false);
+    expect(isSilentReplyPrefixText("HEARTBEAT", "PULSE_ACK")).toBe(false);
+    expect(isSilentReplyPrefixText("HEARTBEAT_", "PULSE_ACK")).toBe(true);
   });
 
   it("rejects non-prefixes and mixed characters", () => {

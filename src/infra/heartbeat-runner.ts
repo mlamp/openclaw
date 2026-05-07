@@ -910,7 +910,7 @@ function buildCommitmentHeartbeatPrompt(params: {
   }));
   const completionInstruction = params.useHeartbeatResponseTool
     ? "If a check-in would be useful now, send at most one concise message in this channel. If none should be sent, use heartbeat_respond with notify=false. Do not mention commitments, ledgers, inference, or scheduling machinery."
-    : "If a check-in would be useful now, send at most one concise message in this channel. If none should be sent, reply HEARTBEAT_OK. Do not mention commitments, ledgers, inference, or scheduling machinery.";
+    : "If a check-in would be useful now, send at most one concise message in this channel. If none should be sent, reply PULSE_ACK. Do not mention commitments, ledgers, inference, or scheduling machinery.";
   return `Due inferred follow-up commitments are available for this exact agent and channel scope.
 
 These are not exact reminders. They were inferred from prior conversation context and should feel natural, brief, and optional.
@@ -1206,7 +1206,7 @@ function resolveHeartbeatRunPrompt(params: {
       const taskList = dueTasks.map((task) => `- ${task.name}: ${task.prompt}`).join("\n");
       const completionInstruction = params.useHeartbeatResponseTool
         ? "After completing all due tasks, use heartbeat_respond to report the outcome. Set notify=false when nothing needs the user's attention."
-        : "After completing all due tasks, reply HEARTBEAT_OK.";
+        : "After completing all due tasks, reply PULSE_ACK.";
       const taskListPrompt = `Run the following periodic tasks (only those due based on their intervals):
 
 ${taskList}
@@ -1864,7 +1864,7 @@ export async function runHeartbeatOnce(opts: {
       : replyPayload
         ? normalizeHeartbeatReply(replyPayload, responsePrefix, ackMaxChars)
         : { shouldSkip: true, text: "", hasMedia: false };
-    // For exec completion events, don't skip even if the response looks like HEARTBEAT_OK.
+    // For exec completion events, don't skip even if the response looks like PULSE_ACK.
     // The model should be responding with exec results, not ack tokens.
     // Also, if normalized.text is empty due to token stripping but we have exec completion,
     // fall back to the original reply text.

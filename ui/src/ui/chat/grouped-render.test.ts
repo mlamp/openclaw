@@ -515,7 +515,7 @@ describe("grouped chat rendering", () => {
         key: "assistant-heartbeat",
         message: {
           role: "assistant",
-          content: [{ type: "text", text: "HEARTBEAT_OK" }],
+          content: [{ type: "text", text: "PULSE_ACK" }],
           timestamp: 1,
         },
         duplicateCount: 4,

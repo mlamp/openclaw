@@ -217,7 +217,7 @@ describe("buildAgentSystemPrompt", () => {
     });
 
     expect(prompt).not.toContain("## Heartbeats");
-    expect(prompt).not.toContain("HEARTBEAT_OK");
+    expect(prompt).not.toContain("PULSE_ACK");
     expect(prompt).not.toContain("Read HEARTBEAT.md");
   });
 
