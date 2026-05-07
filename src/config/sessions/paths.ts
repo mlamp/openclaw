@@ -2,10 +2,15 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { expandHomePrefix, resolveRequiredHomeDir } from "../../infra/home-dir.js";
-import { DEFAULT_AGENT_ID, normalizeAgentId } from "../../routing/session-key.js";
+import {
+  DEFAULT_AGENT_ID,
+  normalizeAgentId,
+  resolveAgentIdFromSessionKey,
+} from "../../routing/session-key.js";
 import { normalizeLowercaseStringOrEmpty } from "../../shared/string-coerce.js";
 import { resolveStateDir } from "../paths.js";
 import { isCompactionCheckpointTranscriptFileName } from "./artifacts.js";
+import type { SessionEntry } from "./types.js";
 
 function resolveAgentSessionsDir(
   agentId?: string,
@@ -331,4 +336,73 @@ export function resolveAgentsDirFromSessionStorePath(storePath: string): string 
     return undefined;
   }
   return agentsDir;
+}
+
+function canonicalizeAbsoluteSessionFilePath(filePath: string): string {
+  const resolved = path.resolve(filePath);
+  try {
+    const parentDir = fs.realpathSync(path.dirname(resolved));
+    return path.join(parentDir, path.basename(resolved));
+  } catch {
+    return resolved;
+  }
+}
+
+export function rewriteSessionFileForNewSessionId(params: {
+  sessionFile?: string;
+  previousSessionId: string;
+  nextSessionId: string;
+}): string | undefined {
+  const trimmed = params.sessionFile?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  const base = path.basename(trimmed);
+  if (!base.endsWith(".jsonl")) {
+    return undefined;
+  }
+  const withoutExt = base.slice(0, -".jsonl".length);
+  if (withoutExt === params.previousSessionId) {
+    return path.join(path.dirname(trimmed), `${params.nextSessionId}.jsonl`);
+  }
+  if (withoutExt.startsWith(`${params.previousSessionId}-topic-`)) {
+    return path.join(
+      path.dirname(trimmed),
+      `${params.nextSessionId}${base.slice(params.previousSessionId.length)}`,
+    );
+  }
+  const forkMatch = withoutExt.match(
+    /^(\d{4}-\d{2}-\d{2}T[\w-]+(?:Z|[+-]\d{2}(?:-\d{2})?)?)_(.+)$/,
+  );
+  if (forkMatch?.[2] === params.previousSessionId) {
+    return path.join(path.dirname(trimmed), `${forkMatch[1]}_${params.nextSessionId}.jsonl`);
+  }
+  return undefined;
+}
+
+export function resolveRotatedCompactionSessionFile(params: {
+  entry: SessionEntry;
+  sessionKey: string;
+  storePath?: string;
+  newSessionId: string;
+}): string {
+  const agentId = resolveAgentIdFromSessionKey(params.sessionKey);
+  const pathOpts = resolveSessionFilePathOptions({
+    agentId,
+    storePath: params.storePath,
+  });
+  const rewrittenSessionFile = rewriteSessionFileForNewSessionId({
+    sessionFile: params.entry.sessionFile,
+    previousSessionId: params.entry.sessionId,
+    nextSessionId: params.newSessionId,
+  });
+  const normalizedRewrittenSessionFile =
+    rewrittenSessionFile && path.isAbsolute(rewrittenSessionFile)
+      ? canonicalizeAbsoluteSessionFilePath(rewrittenSessionFile)
+      : rewrittenSessionFile;
+  return resolveSessionFilePath(
+    params.newSessionId,
+    normalizedRewrittenSessionFile ? { sessionFile: normalizedRewrittenSessionFile } : undefined,
+    pathOpts,
+  );
 }
