@@ -464,7 +464,7 @@ When explicitly_mentioned_bot is true, the incoming message mentions your channe
 
 ```json
 {
-  "schema": "openclaw.inbound_meta.v2",
+  "schema": "oc.inbound_meta.v2",
   "account_id": "primary",
   "channel": "telegram",
   "provider": "telegram",
