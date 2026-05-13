@@ -22,6 +22,17 @@ export type EmbeddedPiAgentMeta = {
   agentHarnessId?: string;
   fallbackAttempts?: FallbackAttempt[];
   cliSessionBinding?: CliSessionBinding;
+  /**
+   * Reason the prepare-time CLI session reuse was invalidated. When set without
+   * a matching `cliSessionBinding`, the post-run session-store write clears the
+   * stale binding so the next turn doesn't repeat the same invalidation.
+   */
+  cliBindingInvalidatedReason?:
+    | "auth-profile"
+    | "auth-epoch"
+    | "system-prompt"
+    | "mcp"
+    | "missing-transcript";
   compactionCount?: number;
   /**
    * Token count estimate after the most recent successful auto-compaction.

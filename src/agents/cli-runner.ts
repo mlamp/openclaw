@@ -569,6 +569,9 @@ export async function runPreparedCliAgent(
                 },
               }
             : {}),
+          ...(context.reusableCliSession.invalidatedReason
+            ? { cliBindingInvalidatedReason: context.reusableCliSession.invalidatedReason }
+            : {}),
         },
       },
     };

@@ -354,6 +354,133 @@ describe("updateSessionStoreAfterAgentRun", () => {
     });
   });
 
+  it("clears the claude-cli binding when the run reports missing-transcript with no new sessionId", async () => {
+    await withTempSessionStore(async ({ storePath }) => {
+      const cfg = {
+        agents: {
+          defaults: {
+            cliBackends: {
+              "claude-cli": {
+                command: "claude",
+              },
+            },
+          },
+        },
+      } as OpenClawConfig;
+      const sessionKey = "agent:main:explicit:test-claude-cli-missing";
+      const sessionId = "test-openclaw-session";
+      const sessionStore: Record<string, SessionEntry> = {
+        [sessionKey]: {
+          sessionId,
+          updatedAt: 1,
+          cliSessionBindings: {
+            "claude-cli": { sessionId: "stale-claude-sid" },
+          },
+          cliSessionIds: {
+            "claude-cli": "stale-claude-sid",
+          },
+          claudeCliSessionId: "stale-claude-sid",
+        },
+      };
+      await fs.writeFile(storePath, JSON.stringify(sessionStore, null, 2));
+
+      const result: EmbeddedPiRunResult = {
+        meta: {
+          durationMs: 1,
+          agentMeta: {
+            sessionId: "",
+            provider: "claude-cli",
+            model: "claude-sonnet-4-6",
+            cliBindingInvalidatedReason: "missing-transcript",
+          },
+        },
+      };
+
+      await updateSessionStoreAfterAgentRun({
+        cfg,
+        sessionId,
+        sessionKey,
+        storePath,
+        sessionStore,
+        contextTokensOverride: 200_000,
+        defaultProvider: "claude-cli",
+        defaultModel: "claude-sonnet-4-6",
+        result,
+      });
+
+      expect(sessionStore[sessionKey]?.cliSessionBindings?.["claude-cli"]).toBeUndefined();
+      expect(sessionStore[sessionKey]?.cliSessionIds?.["claude-cli"]).toBeUndefined();
+      expect(sessionStore[sessionKey]?.claudeCliSessionId).toBeUndefined();
+
+      const persisted = loadSessionStore(storePath, { skipCache: true });
+      expect(persisted[sessionKey]?.cliSessionBindings?.["claude-cli"]).toBeUndefined();
+      expect(persisted[sessionKey]?.cliSessionIds?.["claude-cli"]).toBeUndefined();
+      expect(persisted[sessionKey]?.claudeCliSessionId).toBeUndefined();
+    });
+  });
+
+  it("keeps replacing the binding when the run reports missing-transcript but a new sessionId was emitted", async () => {
+    await withTempSessionStore(async ({ storePath }) => {
+      const cfg = {
+        agents: {
+          defaults: {
+            cliBackends: {
+              "claude-cli": {
+                command: "claude",
+              },
+            },
+          },
+        },
+      } as OpenClawConfig;
+      const sessionKey = "agent:main:explicit:test-claude-cli-replace";
+      const sessionId = "test-openclaw-session";
+      const sessionStore: Record<string, SessionEntry> = {
+        [sessionKey]: {
+          sessionId,
+          updatedAt: 1,
+          cliSessionBindings: {
+            "claude-cli": { sessionId: "stale-claude-sid" },
+          },
+          cliSessionIds: {
+            "claude-cli": "stale-claude-sid",
+          },
+          claudeCliSessionId: "stale-claude-sid",
+        },
+      };
+      await fs.writeFile(storePath, JSON.stringify(sessionStore, null, 2));
+
+      const result: EmbeddedPiRunResult = {
+        meta: {
+          durationMs: 1,
+          agentMeta: {
+            sessionId: "fresh-claude-sid",
+            provider: "claude-cli",
+            model: "claude-sonnet-4-6",
+            cliSessionBinding: { sessionId: "fresh-claude-sid" },
+            cliBindingInvalidatedReason: "missing-transcript",
+          },
+        },
+      };
+
+      await updateSessionStoreAfterAgentRun({
+        cfg,
+        sessionId,
+        sessionKey,
+        storePath,
+        sessionStore,
+        contextTokensOverride: 200_000,
+        defaultProvider: "claude-cli",
+        defaultModel: "claude-sonnet-4-6",
+        result,
+      });
+
+      expect(sessionStore[sessionKey]?.cliSessionBindings?.["claude-cli"]).toEqual({
+        sessionId: "fresh-claude-sid",
+      });
+      expect(sessionStore[sessionKey]?.claudeCliSessionId).toBe("fresh-claude-sid");
+    });
+  });
+
   it("preserves ACP metadata when caller has a stale session snapshot", async () => {
     await withTempSessionStore(async ({ storePath }) => {
       const sessionKey = "agent:codex:acp:test-acp-preserve";
