@@ -8,7 +8,11 @@ import {
 } from "../cli-runner.js";
 import { buildPreparedCliRunContext } from "../cli-runner.test-helpers.js";
 import { applyCliSessionBindingResult, getCliSessionBinding } from "../cli-session.js";
-import { buildBlockedCliRunResult, buildCliRunResult } from "./cli-run-settlement.js";
+import {
+  buildBlockedCliRunResult,
+  buildCliDeliveredFailure,
+  buildCliRunResult,
+} from "./cli-run-settlement.js";
 
 describe("isCliBindingFlushed", () => {
   const workspaceDir = "/tmp/openclaw-workspace";
@@ -137,12 +141,32 @@ describe("isCliBindingFlushed", () => {
 });
 
 describe("CLI native continuity projection", () => {
-  it.each(["blocked", "no-native-id", "native", "stateless"])(
-    "projects only explicit native continuity from a %s result",
-    (kind) => {
-      const context = buildPreparedCliRunContext({ provider: "claude-cli" });
-      const result =
-        kind === "blocked"
+  it.each([
+    "blocked",
+    "no-native-id",
+    "native",
+    "stateless",
+    "missing-blocked",
+    "missing-no-native-id",
+    "missing-native",
+    "missing-delivered",
+  ])("projects only explicit native continuity from a %s result", (kind) => {
+    const context = buildPreparedCliRunContext({ provider: "claude-cli" });
+    const missingTranscript = kind.startsWith("missing-");
+    const freshNativeBinding = kind === "native" || kind === "missing-native";
+    if (missingTranscript) {
+      context.reusableCliSession = { mode: "invalidate", invalidatedReason: "missing-transcript" };
+    }
+    const result =
+      kind === "missing-delivered"
+        ? buildCliDeliveredFailure({
+            context,
+            error: new Error("execution stopped"),
+            evidence: { didSendViaMessagingTool: true, messagingToolSentTexts: ["progress"] },
+            preparedContextAgentMeta: {},
+            sessionBindingDisabled: false,
+          })
+        : kind === "blocked" || kind === "missing-blocked"
           ? buildBlockedCliRunResult({
               context,
               message: "Blocked by the test policy",
@@ -152,32 +176,35 @@ describe("CLI native continuity projection", () => {
           : buildCliRunResult({
               context,
               output: { text: "done" },
-              effectiveCliSessionId: kind === "native" ? "next-native-session" : undefined,
+              effectiveCliSessionId: freshNativeBinding ? "next-native-session" : undefined,
               bindingFlushOk: kind !== "no-native-id",
               usedHistoryPrompt: false,
               userTurnHandled: true,
               sessionBindingDisabled: kind === "stateless",
               preparedContextAgentMeta: {},
             });
-      const entry: SessionEntry = {
-        sessionId: context.params.sessionId,
-        updatedAt: 1,
-        cliSessionBindings: { "claude-cli": { sessionId: "previous-native-session" } },
-      };
+    const entry: SessionEntry = {
+      sessionId: context.params.sessionId,
+      updatedAt: 1,
+      cliSessionBindings: { "claude-cli": { sessionId: "previous-native-session" } },
+    };
 
-      applyCliSessionBindingResult(entry, "claude-cli", result.meta.agentMeta);
+    applyCliSessionBindingResult(entry, "claude-cli", result.meta.agentMeta);
 
-      expect(entry.sessionId).toBe(context.params.sessionId);
-      expect(result.meta.agentMeta?.sessionId).toBe(
-        kind === "native" ? "next-native-session" : context.params.sessionId,
-      );
-      expect(getCliSessionBinding(entry, "claude-cli")?.sessionId).toBe(
-        kind === "native"
-          ? "next-native-session"
-          : kind === "stateless"
-            ? undefined
-            : "previous-native-session",
-      );
-    },
-  );
+    expect(entry.sessionId).toBe(context.params.sessionId);
+    expect(result.meta.agentMeta?.sessionId).toBe(
+      freshNativeBinding
+        ? "next-native-session"
+        : kind === "missing-delivered"
+          ? ""
+          : context.params.sessionId,
+    );
+    expect(getCliSessionBinding(entry, "claude-cli")?.sessionId).toBe(
+      freshNativeBinding
+        ? "next-native-session"
+        : kind === "stateless" || missingTranscript
+          ? undefined
+          : "previous-native-session",
+    );
+  });
 });

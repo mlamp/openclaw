@@ -286,6 +286,13 @@ export function resolveCliSourceReplyMirror(params: {
   return { payloads, delivered, visibleText };
 }
 
+function hasMissingCliTranscript(context: PreparedCliRunContext): boolean {
+  return (
+    context.reusableCliSession.mode === "invalidate" &&
+    context.reusableCliSession.invalidatedReason === "missing-transcript"
+  );
+}
+
 export function buildBlockedCliRunResult(params: {
   message: string;
   context: PreparedCliRunContext;
@@ -334,7 +341,9 @@ export function buildBlockedCliRunResult(params: {
         provider: runParams.provider,
         model: context.modelId,
         ...preparedContextAgentMeta,
-        ...(sessionBindingDisabled ? { clearCliSessionBinding: true } : {}),
+        ...(sessionBindingDisabled || hasMissingCliTranscript(context)
+          ? { clearCliSessionBinding: true }
+          : {}),
       },
     },
   };
@@ -405,7 +414,9 @@ export function buildCliDeliveredFailure(params: {
         provider: runParams.provider,
         model: context.modelId,
         ...preparedContextAgentMeta,
-        ...(sessionBindingDisabled || reusableCliSessionId ? { clearCliSessionBinding: true } : {}),
+        ...(sessionBindingDisabled || reusableCliSessionId || hasMissingCliTranscript(context)
+          ? { clearCliSessionBinding: true }
+          : {}),
       },
     },
     didSendViaMessagingTool: true,
@@ -497,8 +508,10 @@ export function buildCliRunResult(params: {
       ? effectiveCliSessionId
       : undefined;
   const terminalInterruption = output.terminalInterruption;
-  // An interrupted process cannot preserve its now-invalid native session binding.
+  // Missing native history must invalidate durable continuity even when a fresh
+  // attempt emits no replacement; otherwise every later turn retries the dead binding.
   const cliSessionBindingCleared =
+    (!effectiveCliSessionId && hasMissingCliTranscript(context)) ||
     terminalInterruption !== undefined ||
     sessionBindingDisabled ||
     unflushedCliSessionId !== undefined;
