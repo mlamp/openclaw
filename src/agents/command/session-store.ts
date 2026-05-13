@@ -200,6 +200,12 @@ export async function updateSessionStoreAfterAgentRun(params: {
         const cliSessionId = result.meta.agentMeta?.sessionId?.trim();
         if (cliSessionId) {
           setCliSessionId(next, providerUsed, cliSessionId);
+        } else if (result.meta.agentMeta?.cliBindingInvalidatedReason === "missing-transcript") {
+          // Prepare flagged the persisted binding as missing-transcript and the
+          // run produced no new sessionId (e.g. CLI failed to chdir into a
+          // missing workspace dir). Drop the dead binding so the next turn does
+          // not repeat the same invalidation forever.
+          clearCliSession(next, providerUsed);
         }
       }
     }

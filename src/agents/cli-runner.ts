@@ -934,6 +934,9 @@ export async function runPreparedCliAgent(
               }
             : {}),
           ...(unflushedCliSessionId ? { clearCliSessionBinding: true } : {}),
+          ...(context.reusableCliSession.invalidatedReason
+            ? { cliBindingInvalidatedReason: context.reusableCliSession.invalidatedReason }
+            : {}),
         },
       },
       ...(resultParams.output.didSendViaMessagingTool ? { didSendViaMessagingTool: true } : {}),

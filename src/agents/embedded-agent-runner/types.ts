@@ -26,6 +26,19 @@ export type EmbeddedAgentMeta = {
   fallbackAttempts?: FallbackAttempt[];
   cliSessionBinding?: CliSessionBinding;
   clearCliSessionBinding?: boolean;
+  /**
+   * Reason the prepare-time CLI session reuse was invalidated. When set without
+   * a matching `cliSessionBinding`, the post-run session-store write clears the
+   * stale binding so the next turn doesn't repeat the same invalidation.
+   */
+  cliBindingInvalidatedReason?:
+    | "auth-profile"
+    | "auth-epoch"
+    | "system-prompt"
+    | "cwd"
+    | "mcp"
+    | "missing-transcript"
+    | "orphaned-tool-use";
   compactionCount?: number;
   /**
    * Token count estimate after the most recent successful auto-compaction.
