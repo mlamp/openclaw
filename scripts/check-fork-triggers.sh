@@ -17,7 +17,7 @@
 #   3. Schema tag "openclaw.inbound_meta.v1" or "openclaw.inbound_meta.v2"
 #      (we use the defensive "oc.inbound_meta.v2" form).
 #   4. compound "[[reply_to_current]]" + "stripped before sending" — upstream
-#      already evades by using "stripped before user-visible rendering".
+#      already evades by using "Directives stripped before render".
 #
 # Run: bash scripts/check-fork-triggers.sh
 # Exit non-zero on any hit.
@@ -36,7 +36,7 @@ hits=$(git grep -lE 'running inside OpenClaw' -- 'src/**' 'extensions/**' 'docs/
   if git grep -lE 'personal assistant' -- "$f" >/dev/null 2>&1; then
     echo "$f"
   fi
-done)
+done || true)
 if [ -n "$hits" ]; then
   echo "FAIL: Trigger 1 — files contain both 'personal assistant' and 'running inside OpenClaw':"
   echo "$hits" | sed 's/^/  /'
@@ -49,8 +49,8 @@ fi
 # - mocks/fixtures are tolerated
 hits=$(git grep -nE 'HEARTBEAT_OK' -- \
   'src/agents/system-prompt.ts' \
-  'extensions/qqbot/src/**' \
-  'extensions/qqbot/skills/**' \
+  'src/auto-reply/heartbeat.ts' \
+  'extensions/anthropic/cli*.ts' \
   'docs/reference/templates/**' \
   2>/dev/null || true)
 if [ -n "$hits" ]; then
@@ -69,8 +69,8 @@ fi
 
 # Trigger 4 guard: assert system-prompt.test.ts still pins the safe wording.
 # If upstream ever drops that test, the wording can drift back into the trigger.
-if ! git grep -q 'stripped before user-visible rendering' src/agents/system-prompt.test.ts 2>/dev/null; then
-  echo "FAIL: Trigger 4 guard — src/agents/system-prompt.test.ts no longer pins 'stripped before user-visible rendering'."
+if ! git grep -q 'Directives stripped before render' src/agents/system-prompt.test.ts 2>/dev/null; then
+  echo "FAIL: Trigger 4 guard — src/agents/system-prompt.test.ts no longer pins 'Directives stripped before render'."
   echo "  Upstream may have changed the reply-tag wording; verify it does not regress to 'stripped before sending'."
   fail=1
 fi
