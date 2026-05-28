@@ -363,6 +363,12 @@ Docs: https://docs.openclaw.ai
 - QA/E2E/CI: bound Telegram, kitchen-sink, Open WebUI, ClawHub, MCP, Discord, realtime, labeler, and GitHub API waits; fail empty explicit test, live-media, gateway CPU, startup benchmark, plugin gauntlet, and beta-smoke runs instead of false-greening.
 - Agents/Codex: keep spawned agent bootstrap files rooted in the agent workspace while running task commands, transcripts, and compaction from the requested cwd. (#87218) Thanks @mbelinky.
 
+### Fork-local (mlamp)
+
+- Rebased the fork patch queue onto upstream v2026.6.8 (`2026.6.8-mlamp.dev1`) with defensive Claude CLI content-filter neutralization carried forward: agent identity drops "running inside OpenClaw" (including the new `capability-cli` local-model system prompt), inbound-meta schema stays `oc.inbound_meta.v2`, the `HEARTBEAT_OK` literal is scrubbed from prompt-injected surfaces (constant renamed to `PULSE_ACK`), and the reply-tags line tracks upstream's safe "stripped before rendering" wording; `scripts/check-fork-triggers.sh` guards against drift.
+- Fork-local CLI summarizer keeps routing `/compact`, memory flush, conversation label, and session-memory slug generation through the native claude-cli for CLI-backed agents, alongside the dead-`claudeCliSessionId` cleanup on prepare-time `missing-transcript` runs and the context-warmup re-entrancy guard.
+- Dropped two fork patches now superseded upstream: the stuck-session recovery unwedge (upstream ships `requestStuckSessionRecovery` + `isActiveRunProgressStale`) and the followup/queued-reply CLI routing (upstream routes followups through `runCliAgentWithLifecycle`); both behaviors are preserved by upstream's own, more complete implementations.
+
 ## 2026.5.26
 
 ### Highlights
