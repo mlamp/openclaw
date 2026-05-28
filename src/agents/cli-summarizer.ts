@@ -2,8 +2,8 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type { AgentMessage } from "@mariozechner/pi-agent-core";
-import { estimateTokens } from "@mariozechner/pi-coding-agent";
+import type { AgentMessage } from "@earendil-works/pi-agent-core";
+import { estimateTokens } from "@earendil-works/pi-coding-agent";
 import type { OpenClawConfig } from "../config/config.js";
 import {
   resolveRotatedCompactionSessionFile,
@@ -13,7 +13,12 @@ import {
 } from "../config/sessions.js";
 import { readSessionMessages } from "../gateway/session-utils.fs.js";
 import { formatErrorMessage as describeUnknownError } from "../infra/errors.js";
-import { appendFileWithinRoot } from "../infra/fs-safe.js";
+import {
+  appendRegularFile,
+  ensureAbsoluteDirectory,
+  readRegularFile,
+  statRegularFile,
+} from "../infra/fs-safe.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import { getGlobalHookRunner } from "../plugins/hook-runner-global.js";
 import { resolveAgentIdFromSessionKey } from "../routing/session-key.js";
@@ -470,13 +475,26 @@ export async function runCliMemoryFlush(
   });
 
   if (result.text) {
-    await appendFileWithinRoot({
-      rootDir: params.workspaceDir,
-      relativePath: params.memoryFlushWritePath,
-      data: result.text,
-      mkdir: true,
-      prependNewlineIfNeeded: true,
-    });
+    // Append the flushed summary to the memory file within the workspace root,
+    // creating parent dirs and prepending a newline when the existing file does
+    // not already end with one (upstream removed the appendFileWithinRoot helper
+    // in the @openclaw/fs-safe refactor; reimplement with the current primitives).
+    const memoryFilePath = path.resolve(params.workspaceDir, params.memoryFlushWritePath);
+    const memoryDir = await ensureAbsoluteDirectory(path.dirname(memoryFilePath));
+    if (!memoryDir.ok) {
+      throw memoryDir.error;
+    }
+    let memoryPrefix = "";
+    if (!result.text.startsWith("\n")) {
+      const memoryStat = await statRegularFile(memoryFilePath);
+      if (!memoryStat.missing && memoryStat.stat.size > 0) {
+        const { buffer } = await readRegularFile({ filePath: memoryFilePath });
+        if (buffer.length > 0 && buffer[buffer.length - 1] !== 0x0a) {
+          memoryPrefix = "\n";
+        }
+      }
+    }
+    await appendRegularFile({ filePath: memoryFilePath, content: memoryPrefix + result.text });
   } else {
     log.warn(`${diagPrefix} empty CLI output; skipping memory file write`);
   }
