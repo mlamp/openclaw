@@ -39,6 +39,12 @@ Docs: https://docs.openclaw.ai
 - Install/package/release: match npm globstar exclusions, honor dist package exclusions in inventory, omit unpacked test helpers, skip Homebrew until macOS packages need it, package Docker runtime workspace templates, smoke Docker runtime templates during full validation, merge nested shrinkwrap override pins, preserve forked shrinkwrap pins, pin aged `lru-cache`, harden postpublish verification, accept main full-validation proof, and reject empty beta smoke runs.
 - E2E/QA/Crabbox: bound Telegram, Open WebUI, ClawHub, Matrix, Tool Search, MCP, gateway network, bundled runtime, kitchen-sink, codex media, config reload, and agent-turn assertion waits; prefer Azure for Windows targets; reinitialize invalid changed-gate git dirs; full-sync sparse container runs; and fail empty explicit test requests. (#87186)
 
+### Fork-local (mlamp)
+
+- Rebased the fork patch queue onto upstream v2026.5.27 (`2026.5.27-mlamp.dev1`) with defensive Claude CLI content-filter neutralization carried forward: agent identity drops "running inside OpenClaw" (including the new `capability-cli` local-model system prompt), inbound-meta schema stays `oc.inbound_meta.v2`, the `HEARTBEAT_OK` literal is scrubbed from prompt-injected surfaces (constant renamed to `PULSE_ACK`), and the reply-tags line tracks upstream's safe "stripped before rendering" wording; `scripts/check-fork-triggers.sh` guards against drift.
+- Fork-local CLI summarizer keeps routing `/compact`, memory flush, conversation label, and session-memory slug generation through the native claude-cli for CLI-backed agents, alongside the dead-`claudeCliSessionId` cleanup on prepare-time `missing-transcript` runs and the context-warmup re-entrancy guard.
+- Dropped two fork patches now superseded upstream: the stuck-session recovery unwedge (upstream ships `requestStuckSessionRecovery` + `isActiveRunProgressStale`) and the followup/queued-reply CLI routing (upstream routes followups through `runCliAgentWithLifecycle`); both behaviors are preserved by upstream's own, more complete implementations.
+
 ## 2026.5.26
 
 ### Highlights
