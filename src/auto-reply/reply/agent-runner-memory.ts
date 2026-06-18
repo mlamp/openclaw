@@ -13,7 +13,10 @@ import { classifyCompactionReason } from "../../agents/embedded-agent-runner/com
 import { resolveAgentHarnessPolicy } from "../../agents/harness/policy.js";
 import { ensureSelectedAgentHarnessPlugin } from "../../agents/harness/runtime-plugin.js";
 import { runWithModelFallback } from "../../agents/model-fallback.js";
-import { isCliRuntimeAliasForProvider } from "../../agents/model-runtime-aliases.js";
+import {
+  isCliRuntimeAliasForProvider,
+  resolveCliExecutionProviderForSession,
+} from "../../agents/model-runtime-aliases.js";
 import { isCliProvider } from "../../agents/model-selection.js";
 import { resolveContextConfigProviderForRuntime } from "../../agents/openai-routing.js";
 import type { AgentMessage } from "../../agents/runtime/index.js";
@@ -123,6 +126,7 @@ const memoryDeps = {
   runWithModelFallback,
   ensureSelectedAgentHarnessPlugin,
   runEmbeddedAgent: runEmbeddedAgentDefault,
+  runCliMemoryFlush,
   ensureMemoryFlushTargetFile,
   registerAgentRunContext,
   refreshQueuedFollowupSession,
@@ -140,6 +144,7 @@ export function setAgentRunnerMemoryTestDeps(overrides?: Partial<typeof memoryDe
     ensureSelectedAgentHarnessPlugin,
     compactEmbeddedAgentSession: compactEmbeddedAgentSessionDefault,
     runEmbeddedAgent: runEmbeddedAgentDefault,
+    runCliMemoryFlush,
     ensureMemoryFlushTargetFile,
     registerAgentRunContext,
     refreshQueuedFollowupSession,
@@ -929,6 +934,7 @@ export async function runPreflightCompactionIfNeeded(params: {
       authProfileId: params.followupRun.run.authProfileId,
       agentHarnessId:
         entry.sessionId === params.followupRun.run.sessionId ? entry.agentHarnessId : undefined,
+      agentRuntimeOverride: entry.agentRuntimeOverride,
       thinkLevel: params.followupRun.run.thinkLevel,
       bashElevated: params.followupRun.run.bashElevated,
       trigger: "budget",
@@ -1293,15 +1299,26 @@ export async function runMemoryFlushIfNeeded(params: {
         });
       },
       run: async (provider, model, runOptions) => {
-        if (isCliProvider(provider, params.cfg)) {
-          const result = await runCliMemoryFlush({
+        // Gate on the resolved CLI runtime execution provider, not the raw model
+        // provider, or a CLI-backed agent's flush falls onto the embedded SDK path
+        // and fails with "No API key". See resolveCliExecutionProviderForSession.
+        const cliExecutionProvider = resolveCliExecutionProviderForSession({
+          provider,
+          cfg: params.cfg,
+          agentId: params.followupRun.run.agentId,
+          modelId: model,
+          authProfileId: params.followupRun.run.authProfileId,
+          agentRuntimeOverride: activeSessionEntry?.agentRuntimeOverride,
+        });
+        if (isCliProvider(cliExecutionProvider, params.cfg)) {
+          const result = await memoryDeps.runCliMemoryFlush({
             sessionId: params.followupRun.run.sessionId,
             sessionKey: params.followupRun.run.sessionKey ?? params.sessionKey,
             sessionEntry: activeSessionEntry,
             sessionFile: params.followupRun.run.sessionFile,
             workspaceDir: params.followupRun.run.workspaceDir,
             config: params.cfg,
-            provider,
+            provider: cliExecutionProvider,
             model,
             authProfileId: params.followupRun.run.authProfileId,
             storePath: params.storePath,

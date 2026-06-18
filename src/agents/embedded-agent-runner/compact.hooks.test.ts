@@ -5,8 +5,10 @@ import {
   applyExtraParamsToAgentMock,
   applyAgentCompactionSettingsFromConfigMock,
   buildEmbeddedSystemPromptMock,
+  compactViaCliBackendMock,
   contextEngineCompactMock,
   createAgentSessionMock,
+  resolveCliExecutionProviderForSessionMock,
   createPreparedEmbeddedAgentSettingsManagerMock,
   createOpenClawCodingToolsMock,
   enqueueCommandInLaneMock,
@@ -192,6 +194,57 @@ beforeAll(async () => {
 
 beforeEach(() => {
   resetCompactHooksHarnessMocks();
+});
+
+describe("compactEmbeddedAgentSessionDirect CLI runtime routing", () => {
+  beforeEach(() => {
+    resetCompactHooksHarnessMocks();
+    resetCompactSessionStateMocks();
+  });
+
+  it("routes a CLI-backed agent to compactViaCliBackend when the model provider resolves to a CLI runtime", async () => {
+    // A canonical "anthropic/…" model whose configured runtime is a CLI backend:
+    // the gate must resolve the CLI runtime execution provider and dispatch to
+    // compactViaCliBackend, not the direct SDK path (which needs an API key the
+    // subscription account doesn't have -> "No API key"/"out of extra usage").
+    resolveCliExecutionProviderForSessionMock.mockReturnValue("test-cli");
+
+    const result = await compactEmbeddedAgentSessionDirect({
+      sessionId: "session-1",
+      sessionKey: "agent:main:session-1",
+      sessionFile: "/tmp/session.jsonl",
+      workspaceDir: "/tmp/workspace",
+      provider: "anthropic",
+      model: "claude-opus-4-7",
+      config: {
+        agents: { defaults: { cliBackends: { "test-cli": { command: "test-cli" } } } },
+      } as never,
+    });
+
+    expect(compactViaCliBackendMock).toHaveBeenCalledTimes(1);
+    expect(compactViaCliBackendMock).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: "test-cli", model: "claude-opus-4-7" }),
+    );
+    // The direct SDK/embedded compaction path must not run for a CLI-backed agent.
+    expect(resolveModelMock).not.toHaveBeenCalled();
+    expect((result as { ok?: boolean }).ok).toBe(true);
+  });
+
+  it("keeps a non-CLI agent on the embedded SDK path", async () => {
+    resolveCliExecutionProviderForSessionMock.mockReturnValue("anthropic");
+
+    await compactEmbeddedAgentSessionDirect({
+      sessionId: "session-1",
+      sessionKey: "agent:main:session-1",
+      sessionFile: "/tmp/session.jsonl",
+      workspaceDir: "/tmp/workspace",
+      provider: "anthropic",
+      model: "claude-opus-4-7",
+      config: { agents: { defaults: {} } } as never,
+    });
+
+    expect(compactViaCliBackendMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("compactEmbeddedAgentSessionDirect hooks", () => {

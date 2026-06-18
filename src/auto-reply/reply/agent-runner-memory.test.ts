@@ -29,6 +29,7 @@ const incrementCompactionCountMock = vi.fn();
 const ensureSelectedAgentHarnessPluginMock = vi.fn();
 const ensureMemoryFlushTargetFileMock = vi.fn();
 const emitAgentEventMock = vi.fn();
+const runCliMemoryFlushMock = vi.fn();
 const TEST_MAX_FLUSH_FAILURES = 3;
 
 function registerMemoryFlushPlanResolverForTest(resolver: MemoryFlushPlanResolver): void {
@@ -178,6 +179,7 @@ describe("runMemoryFlushIfNeeded", () => {
       result: { tokensAfter: 42 },
     });
     runEmbeddedAgentMock.mockReset().mockResolvedValue({ payloads: [], meta: {} });
+    runCliMemoryFlushMock.mockReset().mockResolvedValue({ payloads: [], meta: {} });
     refreshQueuedFollowupSessionMock.mockReset();
     ensureMemoryFlushTargetFileMock.mockReset().mockResolvedValue(undefined);
     ensureSelectedAgentHarnessPluginMock.mockReset().mockResolvedValue(undefined);
@@ -214,6 +216,7 @@ describe("runMemoryFlushIfNeeded", () => {
       compactEmbeddedAgentSession: compactEmbeddedAgentSessionMock as never,
       runWithModelFallback: runWithModelFallbackMock as never,
       runEmbeddedAgent: runEmbeddedAgentMock as never,
+      runCliMemoryFlush: runCliMemoryFlushMock as never,
       ensureMemoryFlushTargetFile: ensureMemoryFlushTargetFileMock as never,
       refreshQueuedFollowupSession: refreshQueuedFollowupSessionMock as never,
       incrementCompactionCount: incrementCompactionCountMock as never,
@@ -888,7 +891,7 @@ describe("runMemoryFlushIfNeeded", () => {
     ).toBeUndefined();
   });
 
-  it("skips memory flush for CLI providers", async () => {
+  it("routes memory flush through the CLI summarizer for CLI providers", async () => {
     const sessionEntry: SessionEntry = {
       sessionId: "session",
       updatedAt: Date.now(),
@@ -896,7 +899,7 @@ describe("runMemoryFlushIfNeeded", () => {
       compactionCount: 1,
     };
 
-    const entry = await runMemoryFlushIfNeeded({
+    await runMemoryFlushIfNeeded({
       cfg: { agents: { defaults: { cliBackends: { "codex-cli": { command: "codex" } } } } },
       followupRun: createTestFollowupRun({ provider: "codex-cli" }),
       sessionCtx: { Provider: "whatsapp" } as unknown as TemplateContext,
@@ -910,11 +913,13 @@ describe("runMemoryFlushIfNeeded", () => {
       replyOperation: createReplyOperation(),
     });
 
-    expect(entry).toBe(sessionEntry);
+    // A CLI provider routes OpenClaw memory flush through the CLI summarizer,
+    // not the embedded SDK path.
+    expect(runCliMemoryFlushMock).toHaveBeenCalledTimes(1);
     expect(runEmbeddedAgentMock).not.toHaveBeenCalled();
   });
 
-  it("skips memory flush for compatible CLI session runtime pins", async () => {
+  it("routes memory flush through the CLI summarizer for CLI session runtime pins", async () => {
     cliBackendsTesting.setDepsForTest({
       resolveRuntimeCliBackends: () => [
         {
@@ -933,7 +938,7 @@ describe("runMemoryFlushIfNeeded", () => {
       agentRuntimeOverride: "claude-cli",
     };
 
-    const entry = await runMemoryFlushIfNeeded({
+    await runMemoryFlushIfNeeded({
       cfg: { agents: { defaults: { compaction: { memoryFlush: {} } } } },
       followupRun: createTestFollowupRun({
         provider: "anthropic",
@@ -950,7 +955,9 @@ describe("runMemoryFlushIfNeeded", () => {
       replyOperation: createReplyOperation(),
     });
 
-    expect(entry).toBe(sessionEntry);
+    // CLI-runtime-pinned agents route OpenClaw memory flush through the CLI
+    // summarizer (runCliMemoryFlush), not the embedded SDK path.
+    expect(runCliMemoryFlushMock).toHaveBeenCalledTimes(1);
     expect(runEmbeddedAgentMock).not.toHaveBeenCalled();
   });
 
@@ -1661,7 +1668,7 @@ describe("runMemoryFlushIfNeeded", () => {
     expect(compactEmbeddedAgentSessionMock).not.toHaveBeenCalled();
   });
 
-  it("skips preflight compaction for compatible CLI session runtime pins", async () => {
+  it("runs preflight compaction for CLI session runtime pins (routed via the CLI backend)", async () => {
     cliBackendsTesting.setDepsForTest({
       resolveRuntimeCliBackends: () => [
         {
@@ -1688,7 +1695,7 @@ describe("runMemoryFlushIfNeeded", () => {
       agentRuntimeOverride: "claude-cli",
     };
 
-    const entry = await runPreflightCompactionIfNeeded({
+    await runPreflightCompactionIfNeeded({
       cfg: {
         models: {
           providers: {
@@ -1712,8 +1719,9 @@ describe("runMemoryFlushIfNeeded", () => {
       replyOperation: createReplyOperation(),
     });
 
-    expect(entry).toBe(sessionEntry);
-    expect(compactEmbeddedAgentSessionMock).not.toHaveBeenCalled();
+    // CLI-runtime-pinned agents are no longer skipped: preflight compaction runs
+    // and dispatches to the CLI backend inside compactEmbeddedAgentSession.
+    expect(compactEmbeddedAgentSessionMock).toHaveBeenCalledTimes(1);
   });
 
   it("keeps the OpenAI API context window for persisted OpenClaw runtime overrides", async () => {

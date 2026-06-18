@@ -178,6 +178,22 @@ export const rotateTranscriptAfterCompactionMock: Mock<
   rotated: false,
 }));
 export const enqueueCommandInLaneMock = vi.fn((_lane: unknown, task: () => unknown) => task());
+export const compactViaCliBackendMock: Mock<(params?: unknown) => Promise<unknown>> = vi.fn(
+  async () => ({
+    ok: true,
+    compacted: true,
+    result: {
+      summary: "cli summary",
+      firstKeptEntryId: "cli-entry",
+      tokensBefore: 100,
+      tokensAfter: 10,
+      details: {},
+    },
+  }),
+);
+export const resolveCliExecutionProviderForSessionMock: Mock<
+  (params?: { provider?: string }) => string
+> = vi.fn((params) => params?.provider ?? "");
 
 function createCompactHooksRuntimePlan(params: BuildAgentRuntimePlanParams): AgentRuntimePlan {
   const modelApi = params.modelApi ?? params.model?.api ?? undefined;
@@ -363,6 +379,21 @@ export function resetCompactHooksHarnessMocks(): void {
 
   ensureRuntimePluginsLoaded.mockReset();
 
+  compactViaCliBackendMock.mockReset();
+  compactViaCliBackendMock.mockResolvedValue({
+    ok: true,
+    compacted: true,
+    result: {
+      summary: "cli summary",
+      firstKeptEntryId: "cli-entry",
+      tokensBefore: 100,
+      tokensAfter: 10,
+      details: {},
+    },
+  });
+  resolveCliExecutionProviderForSessionMock.mockReset();
+  resolveCliExecutionProviderForSessionMock.mockImplementation((params) => params?.provider ?? "");
+
   resolveContextEngineMock.mockReset();
   resolveContextEngineMock.mockResolvedValue({
     info: { ownsCompaction: true },
@@ -535,6 +566,20 @@ export async function loadCompactHooksHarness(): Promise<{
   vi.doMock("../models-config.js", () => ({
     ensureOpenClawModelsJson: vi.fn(async () => {}),
   }));
+
+  vi.doMock("../cli-summarizer.js", () => ({
+    compactViaCliBackend: compactViaCliBackendMock,
+  }));
+
+  vi.doMock("../model-runtime-aliases.js", async () => {
+    const actual = await vi.importActual<typeof import("../model-runtime-aliases.js")>(
+      "../model-runtime-aliases.js",
+    );
+    return {
+      ...actual,
+      resolveCliExecutionProviderForSession: resolveCliExecutionProviderForSessionMock,
+    };
+  });
 
   vi.doMock("../model-auth.js", () => ({
     applyAuthHeaderOverride: vi.fn((model: unknown) => model),

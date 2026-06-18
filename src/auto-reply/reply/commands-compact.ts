@@ -254,6 +254,7 @@ export const handleCompactCommand: CommandHandler = async (params) => {
     groupChannel: targetSessionEntry.groupChannel,
     groupSpace: targetSessionEntry.space,
     spawnedBy: targetSessionEntry.spawnedBy,
+    agentRuntimeOverride: targetSessionEntry.agentRuntimeOverride,
     senderId: params.command.senderId,
     senderName: params.ctx.SenderName,
     senderUsername: params.ctx.SenderUsername,

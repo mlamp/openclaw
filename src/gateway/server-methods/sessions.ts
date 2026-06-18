@@ -2559,6 +2559,7 @@ export const sessionsHandlers: GatewayRequestHandlers = {
           model: resolvedModel.model,
           authProfileId: entry?.authProfileOverride,
           agentHarnessId: entry?.sessionId === sessionId ? entry.agentHarnessId : undefined,
+          agentRuntimeOverride: entry?.agentRuntimeOverride,
           thinkLevel: normalizeThinkLevel(entry?.thinkingLevel),
           reasoningLevel: normalizeReasoningLevel(entry?.reasoningLevel),
           bashElevated: {

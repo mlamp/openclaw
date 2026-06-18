@@ -254,3 +254,38 @@ export function resolveCliRuntimeExecutionProvider(params: {
     runtime,
   })?.runtime;
 }
+
+/**
+ * Resolve the CLI runtime execution provider for a session: an explicit per-session
+ * runtime pin (agentRuntimeOverride) that is a CLI backend takes precedence, then the
+ * configured/auth-order CLI runtime, then the raw provider. Lets compaction and
+ * memory-flush route CLI-backed agents (whose model provider is the canonical SDK id
+ * like "anthropic/…") through the CLI instead of the direct SDK path, which has no API
+ * key for the subscription account. Non-CLI runtimes (e.g. codex/openclaw harness
+ * runtimes) fall through to the raw provider here; those paths gate them separately.
+ */
+export function resolveCliExecutionProviderForSession(params: {
+  provider: string;
+  cfg?: OpenClawConfig;
+  agentId?: string;
+  modelId?: string;
+  authProfileId?: string;
+  agentRuntimeOverride?: string;
+}): string {
+  const override = normalizeOptionalLowercaseString(params.agentRuntimeOverride);
+  if (
+    override &&
+    isCliRuntimeAliasForProvider({ provider: params.provider, runtime: override, cfg: params.cfg })
+  ) {
+    return override;
+  }
+  return (
+    resolveCliRuntimeExecutionProvider({
+      provider: params.provider,
+      cfg: params.cfg,
+      agentId: params.agentId,
+      modelId: params.modelId,
+      authProfileId: params.authProfileId,
+    }) ?? params.provider
+  );
+}

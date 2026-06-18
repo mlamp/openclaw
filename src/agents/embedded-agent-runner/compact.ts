@@ -94,6 +94,7 @@ import {
   resolveModelAuthMode,
 } from "../model-auth.js";
 import { isFallbackSummaryError, runWithModelFallback } from "../model-fallback.js";
+import { resolveCliExecutionProviderForSession } from "../model-runtime-aliases.js";
 import { isCliProvider } from "../model-selection.js";
 import { supportsModelTools } from "../model-tool-support.js";
 import { ensureOpenClawModelsJson } from "../models-config.js";
@@ -626,14 +627,26 @@ async function compactEmbeddedAgentSessionDirectOnce(
         : undefined,
     };
   };
-  if (isCliProvider(provider, params.config)) {
+  // Gate on the resolved CLI runtime execution provider, not the raw model
+  // provider: a CLI-backed agent's model is the canonical SDK id ("anthropic/…"),
+  // so gating on it misses isCliProvider and drops compaction onto the direct SDK
+  // path (no API key for the subscription account). See resolveCliExecutionProviderForSession.
+  const cliExecutionProvider = resolveCliExecutionProviderForSession({
+    provider,
+    cfg: params.config,
+    agentId: earlyAgentIds.sessionAgentId,
+    modelId,
+    authProfileId,
+    agentRuntimeOverride: params.agentRuntimeOverride,
+  });
+  if (isCliProvider(cliExecutionProvider, params.config)) {
     return await compactViaCliBackend({
       sessionId: params.sessionId,
       sessionKey: params.sessionKey,
       sessionFile: params.sessionFile,
       workspaceDir: resolvedWorkspace,
       config: params.config,
-      provider,
+      provider: cliExecutionProvider,
       model: modelId,
       authProfileId,
       messageProvider: params.messageChannel ?? params.messageProvider,
