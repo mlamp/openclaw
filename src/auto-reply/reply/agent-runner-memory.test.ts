@@ -18,6 +18,7 @@ import type { EmbeddedAgentRunResult } from "../../agents/embedded-agent-runner/
 import type { ModelFallbackAttemptProvenance } from "../../agents/model-fallback.types.js";
 import type { InternalSessionEntry as SessionEntry } from "../../config/sessions.js";
 import {
+  appendTranscriptMessage,
   loadSessionEntry,
   readSessionTranscriptMessageEvents,
   readSessionTranscriptActiveStats,
@@ -65,6 +66,10 @@ const {
   incrementCompactionCountMock: vi.fn(),
   registerAgentRunContextMock: vi.fn(),
   clearAgentRunContextMock: vi.fn(),
+}));
+const runIsolatedCompletionMock = vi.hoisted(() => vi.fn());
+vi.mock("../../agents/isolated-completion.js", () => ({
+  runIsolatedCompletion: runIsolatedCompletionMock,
 }));
 const runWithModelFallbackMock = vi.fn();
 const ensureSelectedAgentHarnessPluginMock = vi.fn();
@@ -163,7 +168,7 @@ function registerMemoryFlushPlanResolverForTest(resolver: MemoryFlushPlanResolve
   registerMemoryCapability("memory-core", { flushPlanResolver: resolver });
 }
 
-function registerClaudeCliBackend(ownsNativeCompaction = false): void {
+function registerClaudeCliBackend(ownsNativeCompaction = false, manualCompaction = false): void {
   cliBackendsTesting.setDepsForTest({
     resolveRuntimeCliBackends: () => [
       {
@@ -172,6 +177,15 @@ function registerClaudeCliBackend(ownsNativeCompaction = false): void {
         pluginId: "anthropic",
         config: { command: "claude" },
         ownsNativeCompaction,
+        ...(manualCompaction
+          ? {
+              manualCompaction: {
+                buildPrompt: () => "/compact",
+                input: "arg" as const,
+                validateOutput: () => ({ ok: true as const }),
+              },
+            }
+          : {}),
       },
     ],
   });
@@ -572,6 +586,7 @@ describe("runMemoryFlushIfNeeded", () => {
       result: { tokensAfter: 42 },
     });
     runEmbeddedAgentMock.mockReset().mockResolvedValue({ payloads: [], meta: {} });
+    runIsolatedCompletionMock.mockReset().mockResolvedValue({ text: "Project uses Rust." });
     refreshQueuedFollowupSessionMock.mockReset();
     ensureSelectedAgentHarnessPluginMock.mockReset().mockResolvedValue(undefined);
     registerAgentRunContextMock.mockReset();
@@ -1648,40 +1663,66 @@ describe("runMemoryFlushIfNeeded", () => {
     ).toBeUndefined();
   });
 
-  it("skips memory flush for CLI providers", async () => {
-    const registry = createEmptyPluginRegistry();
-    registry.cliBackends.push({
-      pluginId: "test-codex-cli",
-      source: "test",
-      backend: { id: "codex-cli", config: { command: "codex" } },
-    });
-    setActivePluginRegistry(registry);
-    const sessionEntry: SessionEntry = {
-      sessionId: "session",
-      updatedAt: Date.now(),
-      totalTokens: 80_000,
-      totalTokensFresh: true,
-      totalTokensVersion: 1,
-      compactionCount: 1,
-    };
-
-    const result = await runMemoryFlushIfNeeded({
-      cfg: {},
-      followupRun: createTestFollowupRun({ provider: "codex-cli" }),
-      sessionCtx: createTestTemplateContext({ Provider: "whatsapp" }),
-      defaultModel: "codex-cli/gpt-5.5",
-      modelContextTokens: 100_000,
-      resolvedVerboseLevel: "off",
-      sessionEntry,
-      sessionStore: { main: sessionEntry },
-      sessionKey: "main",
-      isHeartbeat: false,
-      replyOperation: createReplyOperation(),
-    });
-
-    expect(result).toEqual({ sessionEntry, outcome: "skipped" });
-    expect(runEmbeddedAgentMock).not.toHaveBeenCalled();
-  });
+  it.each(["provider", "config", "session"] as const)(
+    "exports CLI memory selected by %s without API dispatch or session rotation",
+    async (selection) => {
+      registerClaudeCliBackend(true);
+      const sessionKey = "agent:main:main";
+      const storePath = path.join(rootDir, "sessions.json");
+      const scope = { agentId: "main", sessionId: "session", sessionKey, storePath };
+      await upsertSessionEntryCore(
+        scope,
+        createFlushSessionEntry({
+          ...(selection === "session" ? { agentRuntimeOverride: "claude-cli" } : {}),
+        }),
+      );
+      await appendTranscriptMessage(scope, {
+        cwd: rootDir,
+        message: { role: "user", content: "Remember the project uses Rust.", timestamp: 1 },
+      });
+      const sessionEntry = loadSessionEntry(scope)!;
+      const provider = selection === "provider" ? "claude-cli" : "anthropic";
+      const cfg = {
+        agents: {
+          defaults: {
+            compaction: { timeoutSeconds: 240, memoryFlush: { effort: "low" as const } },
+            ...(selection === "config"
+              ? { models: { "anthropic/claude-opus-4-6": { agentRuntime: { id: "claude-cli" } } } }
+              : {}),
+          },
+        },
+      };
+      const result = await runDefaultMemoryFlush(sessionEntry, {
+        cfg,
+        followupRun: createTestFollowupRun({
+          provider,
+          model: "claude-opus-4-6",
+          sessionKey,
+          workspaceDir: rootDir,
+        }),
+        sessionKey,
+        storePath,
+      });
+      expect(result.outcome).toBe("completed");
+      expect(await fs.readFile(path.join(rootDir, "memory/2023-11-14.md"), "utf8")).toBe(
+        "Project uses Rust.",
+      );
+      expect(loadSessionEntry(scope)).toMatchObject({
+        sessionId: "session",
+        compactionCount: 1,
+        memoryFlush: { kind: "succeeded", compactionCount: 1 },
+      });
+      expect(runIsolatedCompletionMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringContaining("Remember the project uses Rust."),
+          timeoutMs: 240_000,
+          thinkLevel: "low",
+        }),
+      );
+      expect(runEmbeddedAgentEntryMock).not.toHaveBeenCalled();
+      expect(runEmbeddedAgentMock).not.toHaveBeenCalled();
+    },
+  );
 
   it("skips memory flush for incognito sessions", async () => {
     const sessionEntry = createFlushSessionEntry({
@@ -1711,39 +1752,6 @@ describe("runMemoryFlushIfNeeded", () => {
       sessionCtx: createTestTemplateContext({ Provider: "webchat" }),
       sessionStore: { [sessionKey]: sessionEntry },
       sessionKey,
-    });
-
-    expect(result).toEqual({ sessionEntry, outcome: "skipped" });
-    expect(runEmbeddedAgentMock).not.toHaveBeenCalled();
-  });
-
-  it("skips memory flush for compatible CLI session runtime pins", async () => {
-    registerClaudeCliBackend();
-    const sessionEntry: SessionEntry = {
-      sessionId: "session",
-      updatedAt: Date.now(),
-      totalTokens: 80_000,
-      totalTokensFresh: true,
-      totalTokensVersion: 1,
-      compactionCount: 1,
-      agentRuntimeOverride: "claude-cli",
-    };
-
-    const result = await runMemoryFlushIfNeeded({
-      cfg: { agents: { defaults: { compaction: { memoryFlush: {} } } } },
-      followupRun: createTestFollowupRun({
-        provider: "anthropic",
-        model: "claude-opus-4-6",
-      }),
-      sessionCtx: createTestTemplateContext({ Provider: "whatsapp" }),
-      defaultModel: "anthropic/claude-opus-4-6",
-      modelContextTokens: 100_000,
-      resolvedVerboseLevel: "off",
-      sessionEntry,
-      sessionStore: { main: sessionEntry },
-      sessionKey: "main",
-      isHeartbeat: false,
-      replyOperation: createReplyOperation(),
     });
 
     expect(result).toEqual({ sessionEntry, outcome: "skipped" });
@@ -3825,6 +3833,65 @@ describe("runMemoryFlushIfNeeded", () => {
     expect(replyOperation.setPhase).not.toHaveBeenCalled();
     expect(compactEmbeddedAgentSessionMock).not.toHaveBeenCalled();
     expect(incrementCompactionCountMock).not.toHaveBeenCalled();
+  });
+
+  it("compacts native CLI pressure once, preserves its binding, and waits for fresh native usage", async () => {
+    registerClaudeCliBackend(true, true);
+    const sessionKey = "agent:main:main";
+    const storePath = path.join(rootDir, "native-preflight.json");
+    const sessionEntry = createFlushSessionEntry({
+      totalTokens: 90_000,
+      agentHarnessId: "claude-cli",
+      cliSessionBindings: { "claude-cli": { sessionId: "native-session", authProfileId: "work" } },
+    });
+    const sessionStore = { [sessionKey]: sessionEntry };
+    await writeTestSessionStore(storePath, sessionKey, sessionEntry);
+    await replaceTranscriptEvents(
+      { agentId: "main", sessionId: "session", sessionKey, storePath },
+      [
+        {
+          type: "message",
+          message: { role: "user", content: "old native history".repeat(10_000) },
+        },
+      ],
+    );
+    incrementCompactionCountMock.mockImplementation(incrementCompactionCount);
+    compactEmbeddedAgentSessionMock.mockResolvedValueOnce({ ok: true, compacted: true });
+    const followupRun = createTestFollowupRun({
+      provider: "anthropic",
+      model: "claude-opus-4-6",
+      sessionId: "session",
+      sessionKey,
+    });
+    const overrides = {
+      cfg: {
+        agents: {
+          defaults: {
+            models: { "anthropic/claude-opus-4-6": { agentRuntime: { id: "claude-cli" } } },
+            compaction: { maxActiveTranscriptBytes: "10b", effort: "high" as const },
+          },
+        },
+      },
+      followupRun,
+      sessionKey,
+      sessionStore,
+      storePath,
+    };
+    const compacted = await runDefaultPreflight(sessionEntry, overrides);
+    expect(compactEmbeddedAgentSessionMock).toHaveBeenCalledOnce();
+    expect(requireCompactEmbeddedAgentSessionCall()).toMatchObject({
+      agentHarnessId: "claude-cli",
+      trigger: "manual",
+      preflightCompactionTrigger: "tokens",
+      cliSessionId: "native-session",
+      cliSessionBinding: { sessionId: "native-session", authProfileId: "work" },
+    });
+    expect(compacted?.totalTokensFresh).toBe(false);
+    expect(compacted?.cliSessionBindings).toEqual(sessionEntry.cliSessionBindings);
+    await runDefaultPreflight(compacted!, overrides);
+    expect(compactEmbeddedAgentSessionMock).toHaveBeenCalledOnce();
+    expect(runEmbeddedAgentMock).not.toHaveBeenCalled();
+    expect(runWithModelFallbackMock).not.toHaveBeenCalled();
   });
 
   it("keeps ownsNativeCompaction absolute over the SQLite transcript byte guard", async () => {

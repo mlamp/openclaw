@@ -27,6 +27,7 @@ import type { AgentMessage } from "../../agents/runtime/index.js";
 import { resolveSandboxConfigForAgent, resolveSandboxRuntimeStatus } from "../../agents/sandbox.js";
 import {
   resolveCompatibleAgentRuntimeForProvider,
+  resolveManualCompactionCliTarget,
   resolvePersistedSessionRuntimeId,
   resolveSessionRuntimeOverrideForProvider,
 } from "../../agents/session-runtime-compat.js";
@@ -722,10 +723,21 @@ export async function runSessionCompactionIfNeeded(params: {
   assertActive();
   const runtimeId = resolveFollowupAgentRuntimeId(runtimeParams);
   const isCli = followupUsesCliRuntime(runtimeParams, runtimeId);
-  const ownsNativeCompaction = followupOwnsNativeCompaction(runtimeParams, runtimeId);
-  if (params.isHeartbeat || isCli || ownsNativeCompaction) {
+  const cliBackend = resolveCliBackendConfig(runtimeId, params.cfg, {
+    agentId: params.followupRun.run.agentId,
+  });
+  const ownsNativeCompaction = cliBackend?.ownsNativeCompaction === true;
+  const nativeCliCompaction = ownsNativeCompaction && Boolean(cliBackend.manualCompaction);
+  if (params.isHeartbeat || ((isCli || ownsNativeCompaction) && !nativeCliCompaction)) {
     return entry ?? params.sessionEntry;
   }
+  const nativeCliTarget = nativeCliCompaction
+    ? resolveManualCompactionCliTarget({
+        provider: params.followupRun.run.provider,
+        entry,
+        cfg: params.cfg,
+      })
+    : undefined;
   const isCodexRuntime = normalizeLowercaseStringOrEmpty(runtimeId) === "codex";
 
   const compactionSessionKey = params.sessionKey ?? params.followupRun.run.sessionKey;
@@ -762,6 +774,11 @@ export async function runSessionCompactionIfNeeded(params: {
       reserveTokens: 20_000,
     });
   const freshPersistedTokens = resolveFreshSessionTotalTokens(entry);
+  // Native compaction changes runtime-owned history, not the mirrored SQLite transcript.
+  // Only new native usage can justify another compact after accounting marks it stale.
+  if (nativeCliCompaction && freshPersistedTokens === undefined) {
+    return entry;
+  }
   const promptTokenEstimate = estimatePromptTokensForMemoryFlush(
     params.promptForEstimate ?? params.followupRun.prompt,
   );
@@ -781,9 +798,12 @@ export async function runSessionCompactionIfNeeded(params: {
     threshold > 0 &&
     freshPersistedTokens + promptTokenEstimate >= threshold - TRANSCRIPT_OUTPUT_READ_BUFFER_TOKENS;
   const maxActiveTranscriptBytes = resolveMaxActiveTranscriptBytes(params.cfg);
-  const shouldCheckActiveTranscriptBytes = typeof maxActiveTranscriptBytes === "number";
+  const shouldCheckActiveTranscriptBytes =
+    !nativeCliCompaction && typeof maxActiveTranscriptBytes === "number";
   const transcriptUsageTokens =
-    isCodexRuntime || (typeof freshPersistedTokens === "number" && !freshNeedsOutputRead)
+    nativeCliCompaction ||
+    isCodexRuntime ||
+    (typeof freshPersistedTokens === "number" && !freshNeedsOutputRead)
       ? undefined
       : await estimatePromptTokensFromSessionTranscript({
           agentId: compactionAgentId,
@@ -999,7 +1019,15 @@ export async function runSessionCompactionIfNeeded(params: {
         authProfileId: params.followupRun.run.authProfileId,
         authProfileIdSource: params.followupRun.run.authProfileIdSource,
         sessionEntry: entry,
+        ...(nativeCliTarget
+          ? {
+              cliSessionId: nativeCliTarget.cliSessionId,
+              cliSessionBinding: nativeCliTarget.cliSessionBinding,
+            }
+          : {}),
         agentHarnessId:
+          nativeCliTarget?.agentHarnessId ??
+          (nativeCliCompaction ? runtimeId : undefined) ??
           params.agentHarnessId ??
           (entry.sessionId === params.followupRun.run.sessionId
             ? entry.modelSelectionLocked === true
@@ -1009,7 +1037,7 @@ export async function runSessionCompactionIfNeeded(params: {
         modelSelectionLocked: entry.modelSelectionLocked === true,
         thinkLevel: params.followupRun.run.thinkLevel,
         bashElevated: params.followupRun.run.bashElevated,
-        trigger: "budget",
+        trigger: nativeCliCompaction ? "manual" : "budget",
         force: true,
         forcePreflight: true,
         preflightRequired: true,
