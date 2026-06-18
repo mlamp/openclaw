@@ -5,7 +5,9 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { parse as parseSemver } from "semver";
 import { compactReleaseNotes } from "./lib/release-notes-compaction.mjs";
+import { parseReleaseVersion } from "./lib/release-version.mjs";
 
 const CHANGELOG_PATH = "CHANGELOG.md";
 const PACKAGE_JSON_PATH = "package.json";
@@ -13,25 +15,41 @@ const BACKUP_PATH = path.join(".artifacts", "package-changelog", "CHANGELOG.md.p
 const MAX_PACKAGED_CHANGELOG_BYTES = 500 * 1024;
 const MIN_RELEASE_SECTION_BODY_BYTES = 32;
 const UNRELEASED_HEADING = "Unreleased";
-const RELEASE_HEADING_PATTERN =
-  /^##\s+([0-9]{4}\.[1-9][0-9]*\.[1-9][0-9]*(?:(?:-(?:alpha|beta)\.[1-9][0-9]*)|(?:-[1-9][0-9]*))?)(?:\s+.*)?$/u;
-const RELEASE_VERSION_PATTERN =
-  /^([0-9]{4}\.[1-9][0-9]*\.[1-9][0-9]*)(?:(?:-(?:alpha|beta)\.[1-9][0-9]*)|(?:-[1-9][0-9]*))?$/u;
-const PRERELEASE_VERSION_PATTERN =
-  /^([0-9]{4}\.[1-9][0-9]*\.[1-9][0-9]*)-(?:alpha|beta)\.[1-9][0-9]*$/u;
+function parsePackageChangelogVersion(version) {
+  const release = parseReleaseVersion(version);
+  if (release) {
+    return release;
+  }
+  const parsed = parseSemver(version);
+  const baseVersion = parsed && `${parsed.major}.${parsed.minor}.${parsed.patch}`;
+  const channel = parsed?.prerelease[0];
+  // Custom prereleases share base-release notes; numeric corrections and the
+  // official alpha/beta trains keep their stricter release identity contract.
+  if (
+    !parsed ||
+    parsed.version !== version ||
+    typeof channel !== "string" ||
+    channel === "alpha" ||
+    channel === "beta" ||
+    !parseReleaseVersion(baseVersion)
+  ) {
+    return null;
+  }
+  return { baseVersion, channel: "prerelease" };
+}
 
 /**
  * Resolves acceptable changelog headings for a package version.
  */
 export function resolvePackageChangelogVersions(packageVersion, options = {}) {
-  const match = RELEASE_VERSION_PATTERN.exec(packageVersion);
-  if (!match) {
+  const parsed = parsePackageChangelogVersion(packageVersion);
+  if (!parsed) {
     throw new Error(
       `Unsupported OpenClaw package version for changelog packaging: ${packageVersion}`,
     );
   }
-  if (PRERELEASE_VERSION_PATTERN.test(packageVersion)) {
-    return [packageVersion, match[1], UNRELEASED_HEADING];
+  if (parsed.channel !== "stable") {
+    return [packageVersion, parsed.baseVersion, UNRELEASED_HEADING];
   }
   return options.allowUnreleased ? [packageVersion, UNRELEASED_HEADING] : [packageVersion];
 }
@@ -42,8 +60,9 @@ function splitLines(content) {
 
 function findLevelTwoHeadings(lines) {
   return lines.flatMap((line, index) => {
+    const headingVersion = /^##\s+(\S+)(?:\s+.*)?$/u.exec(line)?.[1];
     const version =
-      RELEASE_HEADING_PATTERN.exec(line)?.[1] ??
+      (headingVersion && parsePackageChangelogVersion(headingVersion) ? headingVersion : null) ??
       (/^##\s+Unreleased(?:\s+.*)?$/u.test(line) ? UNRELEASED_HEADING : null);
     return version ? [{ index, version, unreleased: /\s+\(Unreleased\)$/u.test(line) }] : [];
   });

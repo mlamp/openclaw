@@ -1010,14 +1010,15 @@ describe("collectInstalledContextEngineRuntimeErrors", () => {
 });
 
 describe("normalizeInstalledBinaryVersion", () => {
-  it("accepts decorated CLI version output", () => {
-    expect(normalizeInstalledBinaryVersion("OpenClaw 2026.4.8 (9ece252)")).toBe("2026.4.8");
-    expect(normalizeInstalledBinaryVersion("OpenClaw 2026.4.8-beta.1 (9ece252)")).toBe(
-      "2026.4.8-beta.1",
-    );
-    expect(normalizeInstalledBinaryVersion("OpenClaw 2026.4.8-alpha.1 (9ece252)")).toBe(
-      "2026.4.8-alpha.1",
-    );
+  it.each([
+    "2026.4.8",
+    "2026.4.8-beta.1",
+    "2026.4.8-alpha.1",
+    "2026.4.8-1",
+    "2026.4.8-custom.dev1",
+  ])("preserves the complete %s package identity", (version) => {
+    expect(normalizeInstalledBinaryVersion(`OpenClaw ${version} (9ece252)`)).toBe(version);
+    expect(normalizeInstalledBinaryVersion(version)).toBe(version);
   });
 });
 

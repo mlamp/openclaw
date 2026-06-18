@@ -56,15 +56,22 @@ describe("package-changelog", () => {
       "2026.5.28",
       "Unreleased",
     ]);
+    expect(resolvePackageChangelogVersions("2026.5.28-custom.dev1")).toEqual([
+      "2026.5.28-custom.dev1",
+      "2026.5.28",
+      "Unreleased",
+    ]);
     expect(resolvePackageChangelogVersions("2026.5.29", { allowUnreleased: true })).toEqual([
       "2026.5.29",
       "Unreleased",
     ]);
   });
 
-  it("extracts only the package version stable release section", () => {
-    expect(extractCurrentPackageChangelog(cumulativeChangelog, "2026.5.28-beta.1")).toBe(
-      changelog`
+  it.each(["2026.5.28-beta.1", "2026.5.28-custom.dev1"])(
+    "extracts only the base release section for %s",
+    (version) => {
+      expect(extractCurrentPackageChangelog(cumulativeChangelog, version)).toBe(
+        changelog`
 # Changelog
 Docs: https://docs.openclaw.ai
 
@@ -76,25 +83,38 @@ Docs: https://docs.openclaw.ai
 ### Fixes
 - Current fix.
 `,
-    );
-  });
+      );
+    },
+  );
 
-  it("prefers an exact prerelease section when it exists", () => {
-    const source = changelog`
+  it.each(["2026.5.28-beta.2", "2026.5.28-custom.dev1"])(
+    "prefers an exact %s section when it exists",
+    (version) => {
+      const source = changelog`
 # Changelog
-## 2026.5.28-beta.2
+## ${version}
 - Beta 2 package notes with enough release detail.
 ## 2026.5.28
 - Stable.
 `;
 
-    expect(extractCurrentPackageChangelog(source, "2026.5.28-beta.2")).toBe(changelog`
+      expect(extractCurrentPackageChangelog(source, version)).toBe(changelog`
 # Changelog
 
-## 2026.5.28-beta.2
+## ${version}
 - Beta 2 package notes with enough release detail.
 `);
-  });
+    },
+  );
+
+  it.each(["2026.5.28-custom..1", "2026.5.28-custom.01", "2026.5.28-beta.0", "2026.5.28-0"])(
+    "rejects invalid package release identity %s",
+    (version) => {
+      expect(() => extractCurrentPackageChangelog(cumulativeChangelog, version)).toThrow(
+        "Unsupported OpenClaw package version",
+      );
+    },
+  );
 
   it.each(["Unreleased", "2026.5.30 (Unreleased)"])(
     "uses %s only as a prerelease fallback when no release heading exists",
@@ -233,12 +253,16 @@ Docs: https://docs.openclaw.ai
     );
   });
 
-  it.each([cumulativeChangelog, oversizedChangelog])(
+  it.each([
+    [cumulativeChangelog, "2026.5.28-beta.1"],
+    [oversizedChangelog, "2026.5.28-beta.1"],
+    [cumulativeChangelog, "2026.5.28-custom.dev1"],
+  ])(
     "prepares and restores all source notes and credits (%#)",
-    async (sourceChangelog) => {
+    async (sourceChangelog, version) => {
       const root = mkdtempSync(path.join(os.tmpdir(), "openclaw-package-changelog-"));
       try {
-        writeFileSync(path.join(root, "package.json"), '{"version":"2026.5.28-beta.1"}\n', "utf8");
+        writeFileSync(path.join(root, "package.json"), JSON.stringify({ version }), "utf8");
         writeFileSync(path.join(root, "CHANGELOG.md"), sourceChangelog, "utf8");
 
         await expect(preparePackageChangelog(root)).resolves.toBe(true);

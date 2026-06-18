@@ -16,6 +16,7 @@ import { builtinModules, createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { isAbsolute, join, posix as pathPosix, relative, win32 as pathWin32 } from "node:path";
 import { pathToFileURL } from "node:url";
+import { valid as validSemver } from "semver";
 import { expectDefined } from "../packages/normalization-core/src/expect.js";
 import { ALWAYS_ALLOWED_RUNTIME_DIR_NAMES } from "../src/plugin-sdk/facade-activation-contract.ts";
 import { BUNDLED_RUNTIME_SIDECAR_PATHS } from "../src/plugins/runtime-sidecar-paths.ts";
@@ -539,8 +540,8 @@ export function collectInstalledBundledExtensionManifestErrors(packageRoot: stri
 
 export function normalizeInstalledBinaryVersion(output: string): string {
   const trimmed = output.trim();
-  const versionMatch = /\b\d{4}\.\d{1,2}\.\d{1,2}(?:-\d+|-(?:alpha|beta)\.\d+)?\b/u.exec(trimmed);
-  return versionMatch?.[0] ?? trimmed;
+  const version = trimmed.split(/\s+/u).find((token) => validSemver(token));
+  return version ?? trimmed;
 }
 
 function listInstalledRootDistJavaScriptFiles(packageRoot: string): DistJavaScriptFileListResult {
