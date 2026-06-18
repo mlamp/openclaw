@@ -2,12 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   runCliSummarizerOneShotMock,
-  runEmbeddedPiAgentMock,
+  runEmbeddedAgentMock,
   isCliProviderMock,
   resolveAgentEffectiveModelPrimaryMock,
 } = vi.hoisted(() => ({
   runCliSummarizerOneShotMock: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
-  runEmbeddedPiAgentMock: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
+  runEmbeddedAgentMock: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
   isCliProviderMock: vi.fn<(...args: unknown[]) => boolean>(),
   resolveAgentEffectiveModelPrimaryMock: vi.fn<(...args: unknown[]) => string | undefined>(),
 }));
@@ -16,9 +16,15 @@ vi.mock("../agents/cli-summarizer.js", () => ({
   runCliSummarizerOneShot: runCliSummarizerOneShotMock,
 }));
 
-vi.mock("../agents/pi-embedded.js", () => ({
-  runEmbeddedPiAgent: runEmbeddedPiAgentMock,
-}));
+vi.mock("../agents/embedded-agent.js", async () => {
+  const actual = await vi.importActual<typeof import("../agents/embedded-agent.js")>(
+    "../agents/embedded-agent.js",
+  );
+  return {
+    ...actual,
+    runEmbeddedAgent: runEmbeddedAgentMock,
+  };
+});
 
 vi.mock("../agents/agent-scope.js", () => ({
   resolveDefaultAgentId: () => "main",
@@ -41,7 +47,7 @@ const { generateSlugViaLLM } = await import("./llm-slug-generator.js");
 
 beforeEach(() => {
   runCliSummarizerOneShotMock.mockReset();
-  runEmbeddedPiAgentMock.mockReset();
+  runEmbeddedAgentMock.mockReset();
   isCliProviderMock.mockReset();
   resolveAgentEffectiveModelPrimaryMock.mockReset();
 });
@@ -63,7 +69,7 @@ describe("generateSlugViaLLM CLI branch", () => {
 
     expect(slug).toBe("vendor-pitch");
     expect(runCliSummarizerOneShotMock).toHaveBeenCalledTimes(1);
-    expect(runEmbeddedPiAgentMock).not.toHaveBeenCalled();
+    expect(runEmbeddedAgentMock).not.toHaveBeenCalled();
     const args = runCliSummarizerOneShotMock.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(args.provider).toBe("claude-cli");
     expect(args.model).toBe("claude-opus-4-7");
@@ -82,10 +88,10 @@ describe("generateSlugViaLLM CLI branch", () => {
     expect(slug).toBeNull();
   });
 
-  it("falls through to runEmbeddedPiAgent for non-CLI providers", async () => {
+  it("falls through to runEmbeddedAgent for non-CLI providers", async () => {
     resolveAgentEffectiveModelPrimaryMock.mockReturnValue("anthropic/claude-opus-4-7");
     isCliProviderMock.mockReturnValue(false);
-    runEmbeddedPiAgentMock.mockResolvedValue({
+    runEmbeddedAgentMock.mockResolvedValue({
       payloads: [{ text: "API Slug" }],
     });
 

@@ -1076,7 +1076,7 @@ describe("projectRecentChatDisplayMessages", () => {
     const result = projectRecentChatDisplayMessages([
       {
         role: "user",
-        content: [{ type: "text", text: "HEARTBEAT_OK" }],
+        content: [{ type: "text", text: "PULSE_ACK" }],
         provenance: {
           kind: "inter_session",
           sourceSessionKey: "agent:main:webchat:source",
@@ -1090,7 +1090,7 @@ describe("projectRecentChatDisplayMessages", () => {
       {
         role: "assistant",
         senderLabel: "Forwarded from main",
-        content: [{ type: "text", text: "HEARTBEAT_OK" }],
+        content: [{ type: "text", text: "PULSE_ACK" }],
         provenance: {
           kind: "inter_session",
           sourceSessionKey: "agent:main:webchat:source",
@@ -1110,7 +1110,7 @@ describe("projectRecentChatDisplayMessages", () => {
       },
       {
         role: "user",
-        content: [{ type: "text", text: "HEARTBEAT_OK" }],
+        content: [{ type: "text", text: "PULSE_ACK" }],
         provenance: {
           kind: "inter_session",
           sourceSessionKey: "agent:main:webchat:source",
@@ -1124,7 +1124,7 @@ describe("projectRecentChatDisplayMessages", () => {
       {
         role: "assistant",
         senderLabel: "Forwarded from main",
-        content: [{ type: "text", text: "HEARTBEAT_OK" }],
+        content: [{ type: "text", text: "PULSE_ACK" }],
         provenance: {
           kind: "inter_session",
           sourceSessionKey: "agent:main:webchat:source",

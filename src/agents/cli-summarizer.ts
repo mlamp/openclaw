@@ -2,8 +2,6 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type { AgentMessage } from "@earendil-works/pi-agent-core";
-import { estimateTokens } from "@earendil-works/pi-coding-agent";
 import type { OpenClawConfig } from "../config/config.js";
 import {
   resolveRotatedCompactionSessionFile,
@@ -25,16 +23,21 @@ import { resolveAgentIdFromSessionKey } from "../routing/session-key.js";
 import { resolveSessionAgentIds } from "./agent-scope.js";
 import { runCliAgent } from "./cli-runner.js";
 import { estimateMessagesTokens } from "./compaction.js";
-import { isFailoverError } from "./failover-error.js";
-import { ensureSessionHeader } from "./pi-embedded-helpers.js";
+import { ensureSessionHeader } from "./embedded-agent-helpers.js";
 import {
   asCompactionHookRunner,
   buildBeforeCompactionHookMetrics,
   runAfterCompactionHooks,
   runBeforeCompactionHooks,
   runPostCompactionSideEffects,
-} from "./pi-embedded-runner/compaction-hooks.js";
-import type { EmbeddedPiCompactResult, EmbeddedPiRunResult } from "./pi-embedded-runner/types.js";
+} from "./embedded-agent-runner/compaction-hooks.js";
+import type {
+  EmbeddedAgentCompactResult,
+  EmbeddedAgentRunResult,
+} from "./embedded-agent-runner/types.js";
+import { isFailoverError } from "./failover-error.js";
+import type { AgentMessage } from "./runtime/index.js";
+import { estimateTokens } from "./sessions/index.js";
 
 const log = createSubsystemLogger("cli-summarize");
 
@@ -44,7 +47,7 @@ const DEFAULT_FLUSH_PROMPT_TOKENS = 60_000;
 
 export type CliSummarizerOneShotResult = {
   text: string;
-  usage?: NonNullable<EmbeddedPiRunResult["meta"]["agentMeta"]>["usage"];
+  usage?: NonNullable<EmbeddedAgentRunResult["meta"]["agentMeta"]>["usage"];
 };
 
 export type RunCliSummarizerOneShotParams = {
@@ -136,7 +139,7 @@ export function readSessionTailForSummarization(
     try {
       cost = estimateTokens(msg);
     } catch {
-      cost = 0;
+      // estimateTokens can throw on malformed messages; treat as zero cost.
     }
     if (cost > 0 && tokens + cost > budget && tail.length > 0) {
       return {
@@ -224,7 +227,7 @@ export type CompactViaCliBackendParams = {
  */
 export async function compactViaCliBackend(
   params: CompactViaCliBackendParams,
-): Promise<EmbeddedPiCompactResult> {
+): Promise<EmbeddedAgentCompactResult> {
   const sessionKey = params.sessionKey?.trim() || params.sessionId;
   const diagPrefix = `[cli-summarize] site=compact sessionKey=${sessionKey} diagId=${params.diagId ?? "<none>"} provider=${params.provider}/${params.model}`;
   const startedAt = Date.now();
@@ -445,7 +448,7 @@ export type RunCliMemoryFlushParams = {
  */
 export async function runCliMemoryFlush(
   params: RunCliMemoryFlushParams,
-): Promise<EmbeddedPiRunResult> {
+): Promise<EmbeddedAgentRunResult> {
   const sessionKey = params.sessionKey?.trim() || params.sessionId;
   const diagPrefix = `[cli-summarize] site=flush sessionKey=${sessionKey} provider=${params.provider}/${params.model}`;
   const tail = readSessionTailForSummarization({

@@ -983,9 +983,7 @@ export function buildAgentSystemPrompt(params: {
 
   // For "none" mode, return just the basic identity line
   if (promptMode === "none") {
-    return ["You are a personal assistant.", modelIdentityLine]
-      .filter(Boolean)
-      .join("\n");
+    return ["You are a personal assistant.", modelIdentityLine].filter(Boolean).join("\n");
   }
 
   const contextFiles = prepareContextFilesForPrompt(params.contextFiles);

@@ -33,7 +33,7 @@ describe("shouldSkipHeartbeatOnlyDelivery", () => {
       shouldSkipHeartbeatOnlyDelivery(
         [
           {
-            text: "HEARTBEAT_OK",
+            text: "PULSE_ACK",
             presentation: {
               blocks: [{ type: "buttons", buttons: [{ label: "Open", value: "open" }] }],
             },

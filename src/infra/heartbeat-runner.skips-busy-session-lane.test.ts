@@ -285,7 +285,7 @@ describe("heartbeat runner skips when target session lane is busy", () => {
       const cfg = createHeartbeatTelegramConfig();
       await seedHeartbeatTelegramSession(storePath, cfg);
       const listActiveReplyRunSessionKeys = vi.fn(() => ["legacy-session-key"]);
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       const result = await runHeartbeatOnce({
         cfg,
@@ -310,7 +310,7 @@ describe("heartbeat runner skips when target session lane is busy", () => {
       const listActiveReplyRunSessionKeys = vi.fn(() => [
         "agent:main:telegram:group:-1003966283270:topic:547",
       ]);
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       const result = await runHeartbeatOnce({
         cfg,
@@ -404,9 +404,9 @@ describe("heartbeat runner skips when target session lane is busy", () => {
         lastTo: "heartbeat",
         updatedAt: Date.now(),
         pendingFinalDelivery: true,
-        pendingFinalDeliveryText: "HEARTBEAT_OK",
+        pendingFinalDeliveryText: "PULSE_ACK",
       });
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       const result = await runHeartbeatOnce({
         cfg,
@@ -433,9 +433,9 @@ describe("heartbeat runner skips when target session lane is busy", () => {
         lastTo: "heartbeat",
         updatedAt: Date.now(),
         pendingFinalDelivery: true,
-        pendingFinalDeliveryText: "HEARTBEAT_OK short",
+        pendingFinalDeliveryText: "PULSE_ACK short",
       });
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
 
       const result = await runHeartbeatOnce({
         cfg,
@@ -468,7 +468,7 @@ describe("heartbeat runner skips when target session lane is busy", () => {
         pendingFinalDeliveryText: "private prior user answer",
         pendingFinalDeliveryCreatedAt: Date.now() - 60_000,
       });
-      replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
+      replySpy.mockResolvedValue({ text: "PULSE_ACK" });
       const sendTelegram = vi.fn().mockResolvedValue({ messageId: "m1", chatId: "default" });
 
       const result = await runHeartbeatOnce({

@@ -306,7 +306,7 @@ export function isSilentReplyPrefixText(
     return true;
   }
   // Keep underscore guard for generic tokens to avoid suppressing unrelated
-  // uppercase words (e.g. HEART/HE with HEARTBEAT_OK). Only allow bare "NO"
+  // uppercase words (e.g. PULSE/PU with PULSE_ACK). Only allow bare "NO"
   // because NO_REPLY streaming can transiently emit that fragment.
   return tokenUpper === SILENT_REPLY_TOKEN && normalized === "NO";
 }

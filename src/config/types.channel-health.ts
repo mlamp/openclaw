@@ -1,6 +1,6 @@
 // Defines channel heartbeat and health visibility configuration types.
 export type ChannelHeartbeatVisibilityConfig = {
-  /** Show HEARTBEAT_OK acknowledgments in chat (default: false). */
+  /** Show PULSE_ACK acknowledgments in chat (default: false). */
   showOk?: boolean;
   /** Show heartbeat alerts with actual content (default: true). */
   showAlerts?: boolean;

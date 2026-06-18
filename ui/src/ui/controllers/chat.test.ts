@@ -640,9 +640,9 @@ describe("handleChatEvent", () => {
     expect(state.chatMessages).toStrictEqual([]);
   });
 
-  it("drops HEARTBEAT_OK final payload from another run without clearing active stream", () => {
+  it("drops PULSE_ACK final payload from another run without clearing active stream", () => {
     const state = createActiveStreamingState();
-    const payload = createOtherRunSilentFinalPayload("HEARTBEAT_OK");
+    const payload = createOtherRunSilentFinalPayload("PULSE_ACK");
 
     expect(handleChatEvent(state, payload)).toBe("final");
     expect(state.chatRunId).toBe("run-user");
@@ -665,7 +665,7 @@ describe("handleChatEvent", () => {
     },
   );
 
-  it("ignores HEARTBEAT_OK delta updates", () => {
+  it("ignores PULSE_ACK delta updates", () => {
     const state = createState({
       sessionKey: "main",
       chatRunId: "run-1",
@@ -675,7 +675,7 @@ describe("handleChatEvent", () => {
       runId: "run-1",
       sessionKey: "main",
       state: "delta",
-      message: { role: "assistant", content: [{ type: "text", text: "HEARTBEAT_OK" }] },
+      message: { role: "assistant", content: [{ type: "text", text: "PULSE_ACK" }] },
     };
 
     expect(handleChatEvent(state, payload)).toBe("delta");

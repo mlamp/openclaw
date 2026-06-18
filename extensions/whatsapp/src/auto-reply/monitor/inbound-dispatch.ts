@@ -653,7 +653,7 @@ export async function dispatchWhatsAppBufferedReply(params: {
       onHeartbeatStrip: () => {
         if (!didLogHeartbeatStrip) {
           didLogHeartbeatStrip = true;
-          logVerbose("Stripped stray HEARTBEAT_OK token from web reply");
+          logVerbose("Stripped stray PULSE_ACK token from web reply");
         }
       },
       deliver: async (payload: ReplyPayload, info: { kind: ReplyLifecycleKind }) => {

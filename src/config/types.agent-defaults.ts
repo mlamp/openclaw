@@ -420,11 +420,11 @@ export type AgentDefaultsConfig = {
     to?: string;
     /** Optional account id for multi-account channels. */
     accountId?: string;
-    /** Override the heartbeat prompt body (default: "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply HEARTBEAT_OK."). */
+    /** Override the heartbeat prompt body (default: "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply PULSE_ACK."). */
     prompt?: string;
     /** Include the ## Heartbeats system prompt section for the default agent (default: true). */
     includeSystemPromptSection?: boolean;
-    /** Max chars allowed after HEARTBEAT_OK before delivery (default: 30). */
+    /** Max chars allowed after PULSE_ACK before delivery (default: 30). */
     ackMaxChars?: number;
     /** Suppress tool error warning payloads during heartbeat runs. */
     suppressToolErrorWarnings?: boolean;

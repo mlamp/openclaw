@@ -270,7 +270,7 @@ describe("getReplyFromConfig fast test bootstrap", () => {
         sessionId: "pending-ack",
         updatedAt: Date.now(),
         pendingFinalDelivery: true,
-        pendingFinalDeliveryText: "HEARTBEAT_OK",
+        pendingFinalDeliveryText: "PULSE_ACK",
         pendingFinalDeliveryCreatedAt: 1,
         pendingFinalDeliveryAttemptCount: 4,
         pendingFinalDeliveryLastError: null,
@@ -306,7 +306,7 @@ describe("getReplyFromConfig fast test bootstrap", () => {
         sessionId: "pending-ack-with-remainder",
         updatedAt: Date.now(),
         pendingFinalDelivery: true,
-        pendingFinalDeliveryText: "HEARTBEAT_OK short",
+        pendingFinalDeliveryText: "PULSE_ACK short",
       },
     });
     const cfg = withFastReplyConfig({
@@ -326,7 +326,7 @@ describe("getReplyFromConfig fast test bootstrap", () => {
 
     const stored = readFastPathSessionEntry(storePath, sessionKey);
     expect(stored.pendingFinalDelivery).toBe(true);
-    expect(stored.pendingFinalDeliveryText).toBe("HEARTBEAT_OK short");
+    expect(stored.pendingFinalDeliveryText).toBe("PULSE_ACK short");
     expect(stored.pendingFinalDeliveryAttemptCount).toBeUndefined();
   });
 

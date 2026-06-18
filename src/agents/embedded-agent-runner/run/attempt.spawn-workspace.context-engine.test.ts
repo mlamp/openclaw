@@ -1085,7 +1085,7 @@ describe("runEmbeddedAttempt context engine sessionKey forwarding", () => {
         content: [{ type: "text", text: '{"notify":true}' }],
         timestamp: 3,
       },
-      { role: "assistant", content: "HEARTBEAT_OK", timestamp: 4 },
+      { role: "assistant", content: "PULSE_ACK", timestamp: 4 },
     ] as AgentMessage[];
 
     const result = await createContextEngineAttemptRunner({
@@ -1112,7 +1112,7 @@ describe("runEmbeddedAttempt context engine sessionKey forwarding", () => {
       "heartbeat_respond",
       '"notify":true',
       "Build is blocked on missing credentials.",
-      "HEARTBEAT_OK",
+      "PULSE_ACK",
     ]) {
       expect(assembledMessagesJson).toContain(visibleContext);
       expect(snapshotJson).toContain(visibleContext);

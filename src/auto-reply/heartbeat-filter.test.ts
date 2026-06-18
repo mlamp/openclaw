@@ -172,7 +172,7 @@ describe("filterHeartbeatTranscriptArtifacts", () => {
         },
         {
           role: "assistant",
-          content: [{ type: "output_text", text: "HEARTBEAT_OK" }],
+          content: [{ type: "output_text", text: "PULSE_ACK" }],
         },
         {
           role: "user",
@@ -257,7 +257,7 @@ describe("filterHeartbeatTranscriptArtifacts", () => {
       {
         role: "toolResult",
         toolCallId: "call_heartbeat",
-        content: [{ type: "text", text: "HEARTBEAT_OK" }],
+        content: [{ type: "text", text: "PULSE_ACK" }],
       },
       { role: "user", content: "what model are you" },
     ];
@@ -288,7 +288,7 @@ describe("filterHeartbeatTranscriptArtifacts", () => {
       {
         role: "toolResult",
         toolCallId: "call_heartbeat",
-        content: [{ type: "text", text: "HEARTBEAT_OK" }],
+        content: [{ type: "text", text: "PULSE_ACK" }],
       },
       { role: "user", content: "what model are you" },
     ];
@@ -372,7 +372,7 @@ describe("filterHeartbeatTranscriptArtifacts", () => {
       {
         role: "toolResult",
         toolCallId: "call_heartbeat",
-        content: [{ type: "text", text: "HEARTBEAT_OK" }],
+        content: [{ type: "text", text: "PULSE_ACK" }],
       },
       { role: "assistant", content: "No visible update. notify=false" },
       { role: "user", content: "what model are you" },
@@ -387,7 +387,7 @@ describe("filterHeartbeatTranscriptArtifacts", () => {
     const messages = [
       { role: "user", content: HEARTBEAT_TRANSCRIPT_PROMPT },
       { role: "assistant", content: "Checking heartbeat status..." },
-      { role: "assistant", content: "HEARTBEAT_OK" },
+      { role: "assistant", content: "PULSE_ACK" },
       { role: "user", content: "what model are you" },
     ];
 
@@ -452,7 +452,7 @@ describe("filterHeartbeatTranscriptArtifacts", () => {
         toolCallId: "call_heartbeat",
         content: [{ type: "text", text: '{"notify":true}' }],
       },
-      { role: "assistant", content: "HEARTBEAT_OK" },
+      { role: "assistant", content: "PULSE_ACK" },
       { role: "user", content: "what changed while I was away?" },
     ];
 
@@ -487,7 +487,7 @@ describe("filterHeartbeatTranscriptArtifacts", () => {
         toolCallId: "call_heartbeat",
         content: [{ type: "text", text: '{"notify":true}' }],
       },
-      { role: "assistant", content: "HEARTBEAT_OK" },
+      { role: "assistant", content: "PULSE_ACK" },
       { role: "user", content: "what changed while I was away?" },
     ];
 
@@ -857,7 +857,7 @@ describe("filterHeartbeatTranscriptArtifacts", () => {
   it("stops a no-op span before a later visible heartbeat alert", () => {
     const messages = [
       { role: "user", content: HEARTBEAT_TRANSCRIPT_PROMPT },
-      { role: "assistant", content: "HEARTBEAT_OK" },
+      { role: "assistant", content: "PULSE_ACK" },
       { role: "user", content: HEARTBEAT_TRANSCRIPT_PROMPT },
       { role: "assistant", content: "Build is blocked on a failing release check." },
       { role: "user", content: "what changed while I was away?" },
@@ -906,7 +906,7 @@ describe("filterHeartbeatTranscriptArtifacts", () => {
       {
         role: "toolResult",
         toolCallId: "call_heartbeat",
-        content: [{ type: "text", text: "HEARTBEAT_OK" }],
+        content: [{ type: "text", text: "PULSE_ACK" }],
       },
       { role: "user", content: "what model are you" },
       { role: "assistant", content: "notify=false" },

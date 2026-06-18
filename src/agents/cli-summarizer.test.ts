@@ -3,8 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SessionEntry } from "../config/sessions.js";
+import type { EmbeddedAgentRunResult } from "./embedded-agent-runner/types.js";
 import { FailoverError } from "./failover-error.js";
-import type { EmbeddedPiRunResult } from "./pi-embedded-runner/types.js";
 
 const {
   runCliAgentMock,
@@ -39,10 +39,10 @@ vi.mock("../hooks/internal-hooks.js", () => ({
   triggerInternalHook: triggerInternalHookMock,
 }));
 
-vi.mock("./pi-embedded-runner/compaction-hooks.js", async () => {
-  const actual = await vi.importActual<typeof import("./pi-embedded-runner/compaction-hooks.js")>(
-    "./pi-embedded-runner/compaction-hooks.js",
-  );
+vi.mock("./embedded-agent-runner/compaction-hooks.js", async () => {
+  const actual = await vi.importActual<
+    typeof import("./embedded-agent-runner/compaction-hooks.js")
+  >("./embedded-agent-runner/compaction-hooks.js");
   return {
     ...actual,
     runPostCompactionSideEffects: runPostCompactionSideEffectsMock,
@@ -64,7 +64,7 @@ async function makeTempDir(): Promise<string> {
   return dir;
 }
 
-function makeRunResult(text: string, sessionId = "cli-session-id"): EmbeddedPiRunResult {
+function makeRunResult(text: string, sessionId = "cli-session-id"): EmbeddedAgentRunResult {
   return {
     payloads: text ? [{ text }] : undefined,
     meta: {

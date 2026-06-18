@@ -608,7 +608,7 @@ describe("runReplyAgent pending final delivery capture", () => {
   });
 
   it("persists heartbeat reply remainder as pending delivery when remainder exceeds ackMaxChars", async () => {
-    // When a heartbeat response contains HEARTBEAT_OK followed by substantive content,
+    // When a heartbeat response contains PULSE_ACK followed by substantive content,
     // the remainder after stripping the token must be persisted for durable delivery.
     // The default ackMaxChars is 300 — any remainder longer than that is treated as real content.
     const sessionEntry: SessionEntry = {
@@ -619,7 +619,7 @@ describe("runReplyAgent pending final delivery capture", () => {
     const storePath = await createSessionStoreFile(sessionEntry);
     const longRemainder = "Sent daily digest to channel. ".repeat(12).trimEnd(); // ~360 chars, > 300
     state.runEmbeddedAgentMock.mockResolvedValueOnce({
-      payloads: [{ text: `HEARTBEAT_OK ${longRemainder}` }],
+      payloads: [{ text: `PULSE_ACK ${longRemainder}` }],
       meta: {},
     });
 
@@ -684,7 +684,7 @@ describe("runReplyAgent typing (heartbeat)", () => {
     );
     try {
       state.runEmbeddedAgentMock.mockResolvedValueOnce({
-        payloads: [{ text: "HEARTBEAT_OK" }],
+        payloads: [{ text: "PULSE_ACK" }],
         meta: {},
       });
 

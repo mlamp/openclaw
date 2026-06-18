@@ -31,7 +31,7 @@ describe("resolveFollowupDeliveryPayloads", () => {
 
   it("preserves transcript ownership when stripping heartbeat text", () => {
     const payload = setReplyPayloadMetadata(
-      { text: "HEARTBEAT_OK still working" },
+      { text: "PULSE_ACK still working" },
       { assistantTranscriptOwned: true },
     );
 
