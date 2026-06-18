@@ -169,6 +169,26 @@ Docs: https://docs.openclaw.ai
     }
   });
 
+  it("skips packaging for non-release (dev/fork) versions and leaves the changelog intact", async () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "openclaw-package-changelog-"));
+    const backupPath = path.join(
+      root,
+      ".artifacts",
+      "package-changelog",
+      "CHANGELOG.md.prepack-backup",
+    );
+    try {
+      writeFileSync(path.join(root, "package.json"), '{"version":"2026.6.8-mlamp.dev1"}\n', "utf8");
+      writeFileSync(path.join(root, "CHANGELOG.md"), cumulativeChangelog, "utf8");
+
+      await expect(preparePackageChangelog(root)).resolves.toBe(false);
+      expect(readFileSync(path.join(root, "CHANGELOG.md"), "utf8")).toBe(cumulativeChangelog);
+      expect(existsSync(backupPath)).toBe(false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("refuses to restore stale backups over current changelog edits", async () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "openclaw-package-changelog-"));
     const backupPath = path.join(

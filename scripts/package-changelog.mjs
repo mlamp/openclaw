@@ -151,6 +151,12 @@ export async function preparePackageChangelog(cwd = process.cwd()) {
   const backupPath = path.join(cwd, BACKUP_PATH);
   const original = await readFile(changelogPath, "utf8");
   const packageVersion = await readPackageVersion(cwd);
+  // Non-release versions (dev/fork builds like "2026.6.8-mlamp.dev1") have no
+  // matching release section to extract; ship the full CHANGELOG.md unchanged
+  // rather than failing the pack on a missing/unsupported release heading.
+  if (!RELEASE_VERSION_PATTERN.test(packageVersion)) {
+    return false;
+  }
   const packaged = extractCurrentPackageChangelog(original, packageVersion);
   if (packaged === original) {
     return false;
