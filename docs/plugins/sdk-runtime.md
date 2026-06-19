@@ -146,6 +146,8 @@ two-party event loops that do not go through the shared inbound reply runner.
 
     `runEmbeddedPiAgent(...)` remains as a deprecated compatibility alias for existing plugins. New code should use `runEmbeddedAgent(...)`.
 
+    `runSessionAgentTurn(...)` is the CLI-aware variant. Pass the same params plus the session's `agentRuntimeOverride` (from `api.runtime.agent.session.getSessionEntry`), and it routes CLI-backed sessions — whose model provider is stored as the canonical SDK id but whose turns run through a CLI runtime — through that CLI runtime instead of the metered in-process SDK. Prefer it over `runEmbeddedAgent(...)` for sub-agents that execute on the session's own model; keep using `runEmbeddedAgent(...)` for fixed-model or JSON single-shot runs that must stay on the SDK path.
+
     `resolveThinkingPolicy(...)` returns the provider/model's supported thinking levels and optional default. Provider plugins own the model-specific profile through their thinking hooks, so tool plugins should call this runtime helper instead of importing or duplicating provider lists.
 
     `normalizeThinkingLevel(...)` converts user text such as `on`, `x-high`, or `extra high` to the canonical stored level before checking it against the resolved policy.

@@ -140,6 +140,10 @@ type RuntimeRunEmbeddedAgent = (
   params: import("../../agents/embedded-agent-runner/run/params.js").RunEmbeddedAgentParams,
 ) => Promise<import("../../agents/embedded-agent-runner/types.js").EmbeddedAgentRunResult>;
 
+type RuntimeRunSessionAgentTurn = (
+  params: import("../../auto-reply/reply/session-agent-turn.js").RunSessionAgentTurnParams,
+) => Promise<import("../../agents/embedded-agent-runner/types.js").EmbeddedAgentRunResult>;
+
 /** Core runtime helpers exposed to trusted native plugins. */
 export type PluginRuntimeCore = {
   version: string;
@@ -201,6 +205,13 @@ export type PluginRuntimeCore = {
     runEmbeddedAgent: RuntimeRunEmbeddedAgent;
     /** @deprecated Use runEmbeddedAgent. */
     runEmbeddedPiAgent: RuntimeRunEmbeddedAgent;
+    /**
+     * Run one agent turn for a session, routing CLI-backed sessions (whose model
+     * provider is the canonical SDK id like "anthropic/…") through the CLI runtime
+     * instead of the metered in-process SDK. Prefer this over runEmbeddedAgent for
+     * sub-agents that execute on the session's own model.
+     */
+    runSessionAgentTurn: RuntimeRunSessionAgentTurn;
     resolveAgentTimeoutMs: typeof import("../../agents/timeout.js").resolveAgentTimeoutMs;
     ensureAgentWorkspace: typeof import("../../agents/workspace.js").ensureAgentWorkspace;
     session: {

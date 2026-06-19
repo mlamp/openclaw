@@ -65,6 +65,7 @@ describe("active-memory plugin", () => {
   const hookOptions: Record<string, Record<string, unknown> | undefined> = {};
   const registeredCommands: Record<string, any> = {};
   const runEmbeddedAgent = vi.fn();
+  const runSessionAgentTurn = vi.fn();
   let stateDir = "";
   let configFile: Record<string, unknown> = {};
   let pluginConfig: Record<string, unknown> = {
@@ -118,6 +119,7 @@ describe("active-memory plugin", () => {
     runtime: {
       agent: {
         runEmbeddedAgent,
+        runSessionAgentTurn,
         session: {
           resolveStorePath: vi.fn(() => "/tmp/openclaw-session-store.json"),
           loadSessionStore: vi.fn(() => hoisted.sessionStore),
@@ -297,6 +299,10 @@ describe("active-memory plugin", () => {
     const calls = runEmbeddedAgent.mock.calls;
     return requireRecord(calls[calls.length - 1]?.[0], "expected embedded run params");
   };
+  const lastSessionAgentTurnParams = () => {
+    const calls = runSessionAgentTurn.mock.calls;
+    return requireRecord(calls[calls.length - 1]?.[0], "expected session agent turn params");
+  };
   const lastEmbeddedPrompt = () =>
     requireNonEmptyString(lastEmbeddedRunParams().prompt, "expected embedded prompt");
   const lastEmbeddedSessionKey = () =>
@@ -390,6 +396,11 @@ describe("active-memory plugin", () => {
         payloads: [{ text: "- lemon pepper wings\n- blue cheese" }],
       };
     });
+    // Recall dispatches through the CLI-aware seam; the non-CLI path delegates to
+    // the embedded SDK runner, so existing runEmbeddedAgent assertions still hold.
+    runSessionAgentTurn.mockImplementation((params: { sessionFile: string }) =>
+      runEmbeddedAgent(params),
+    );
     testing.resetActiveRecallCacheForTests();
     testing.setTimeoutPartialDataGraceMsForTests(5);
     plugin.register(api as unknown as OpenClawPluginApi);
@@ -1394,6 +1405,40 @@ describe("active-memory plugin", () => {
     expect(params.sessionKey).toMatch(/^agent:main:main:active-memory:[a-f0-9]{12}$/);
     expect(activeMemoryConfigFrom(embeddedRunConfig()).qmd).toEqual({ searchMode: "search" });
     expect(params.cleanupBundleMcpOnRunEnd).toBe(true);
+  });
+
+  it("routes recall through the CLI-aware seam with the session runtime pin", async () => {
+    // CLI-backed agent: model persisted as the canonical SDK id, session pinned
+    // to a CLI runtime via agentRuntimeOverride. Recall must dispatch through the
+    // CLI-aware seam and hand it the raw provider + the pin so the seam routes to
+    // the CLI runtime instead of the metered in-process SDK ("out of extra usage").
+    api.config = {
+      agents: { defaults: { model: { primary: "anthropic/claude-opus-4-8" } } },
+    };
+    hoisted.sessionStore["agent:main:main"] = {
+      sessionId: "s-main",
+      updatedAt: 0,
+      agentRuntimeOverride: "claude-cli",
+    };
+
+    const result = await hooks.before_prompt_build(
+      {
+        prompt: "what wings should i order?",
+        messages: [{ role: "user", content: "i want something greasy tonight" }],
+      },
+      {
+        agentId: "main",
+        trigger: "user",
+        sessionKey: "agent:main:main",
+        messageProvider: "webchat",
+      },
+    );
+
+    expect(runSessionAgentTurn).toHaveBeenCalledTimes(1);
+    const params = lastSessionAgentTurnParams();
+    expect(params.provider).toBe("anthropic");
+    expect(params.agentRuntimeOverride).toBe("claude-cli");
+    expectPrependContextContains(result, "lemon pepper wings");
   });
 
   it("lets active memory inherit the main QMD search mode when configured", async () => {

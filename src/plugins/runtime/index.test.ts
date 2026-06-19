@@ -307,6 +307,7 @@ describe("plugin runtime command execution", () => {
         expectFunctionKeys(runtime.agent as Record<string, unknown>, [
           "runEmbeddedAgent",
           "runEmbeddedPiAgent",
+          "runSessionAgentTurn",
           "normalizeThinkingLevel",
           "resolveThinkingPolicy",
           "resolveAgentDir",

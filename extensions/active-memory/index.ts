@@ -2913,6 +2913,22 @@ async function runRecallSubagent(params: {
       agentId: params.agentId,
       sessionId: params.sessionId,
     });
+  // Resolve the parent session's CLI runtime pin so a CLI-backed agent's recall
+  // routes through the CLI runtime instead of the metered in-process SDK, which
+  // 400s ("out of extra usage") for subscription accounts. The seam gates on the
+  // resolved execution provider (see runSessionAgentTurn); a missing/unreadable
+  // entry leaves it undefined and keeps the embedded SDK path.
+  let agentRuntimeOverride: string | undefined;
+  if (parentSessionKey !== undefined) {
+    try {
+      agentRuntimeOverride = params.api.runtime.agent.session.getSessionEntry({
+        agentId: params.agentId,
+        sessionKey: parentSessionKey,
+      })?.agentRuntimeOverride;
+    } catch {
+      agentRuntimeOverride = undefined;
+    }
+  }
   const subagentScope = parentSessionKey ?? params.sessionId ?? crypto.randomUUID();
   const subagentSuffix = `active-memory:${crypto
     .createHash("sha1")
@@ -2964,7 +2980,7 @@ async function runRecallSubagent(params: {
   try {
     const embeddedConfig = applyActiveMemoryRuntimeConfigSnapshot(params.api.config, params.config);
     const embeddedTimeoutMs = params.config.timeoutMs + params.config.setupGraceTimeoutMs;
-    const result = await params.api.runtime.agent.runEmbeddedAgent({
+    const result = await params.api.runtime.agent.runSessionAgentTurn({
       sessionId: subagentSessionId,
       sessionKey: subagentSessionKey,
       agentId: params.agentId,
@@ -2977,6 +2993,7 @@ async function runRecallSubagent(params: {
       prompt,
       provider: modelRef.provider,
       model: modelRef.model,
+      agentRuntimeOverride,
       lane: ACTIVE_MEMORY_RECALL_LANE,
       timeoutMs: embeddedTimeoutMs,
       runId: subagentSessionId,
