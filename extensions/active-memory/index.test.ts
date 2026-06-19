@@ -875,6 +875,42 @@ describe("active-memory plugin", () => {
     expect(lastEmbeddedRunParams().cliBackendDispatch).toBe("subscription-auth");
   });
 
+  it.each(["anthropic", "openai"])(
+    "inherits same-provider parent runtime and auth pins for %s recall",
+    async (provider) => {
+      hoisted.sessionStore["agent:main:main"] = {
+        sessionId: "s-main",
+        updatedAt: 0,
+        providerOverride: "anthropic",
+        modelOverride: "claude-sonnet-4-6",
+        agentRuntimeOverride: "claude-cli",
+        authProfileOverride: "anthropic:chosen",
+      };
+      registerPluginConfig({ model: `${provider}/recall-model` });
+      await runPromptBuild(
+        { prompt: "what wings should i order?" },
+        {
+          modelProviderId: "anthropic",
+          modelId: "claude-sonnet-4-6",
+        },
+      );
+      expect(lastEmbeddedRunParams()).toMatchObject({
+        agentHarnessRuntimeOverride: provider === "anthropic" ? "claude-cli" : undefined,
+        authProfileId: provider === "anthropic" ? "anthropic:chosen" : undefined,
+      });
+      expect(resolveCliBackendDispatchEligibility).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ...(provider === "anthropic"
+            ? {
+                agentHarnessRuntimeOverride: "claude-cli",
+                authProfileId: "anthropic:chosen",
+              }
+            : { provider: "openai" }),
+        }),
+      );
+    },
+  );
+
   it("runs recall on a dedicated active-memory lane", async () => {
     await runPromptBuild({ prompt: "what wings should i order?" });
 

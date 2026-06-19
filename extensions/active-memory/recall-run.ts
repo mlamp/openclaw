@@ -22,7 +22,7 @@ import {
 import { buildRecallPrompt } from "./prompt.js";
 import { getModelRef } from "./query.js";
 import { toSingleLineErrorMessage } from "./recall-state.js";
-import { resolveRecallRunChannelContext } from "./session.js";
+import { resolveRecallRunChannelContext, resolveRecallRuntimePins } from "./session.js";
 import {
   attachPartialTimeoutData,
   readMemoryToolResultEvidence,
@@ -255,6 +255,15 @@ async function runRecallSubagent(params: {
       channelId: params.channelId,
     });
     const embeddedTimeoutMs = params.config.timeoutMs + params.config.setupGraceTimeoutMs;
+    const { agentHarnessRuntimeOverride, authProfileId } = resolveRecallRuntimePins({
+      api: params.api,
+      config: params.runtimeConfig,
+      agentId: params.agentId,
+      sessionKey: parentSessionKey,
+      sessionId: params.sessionId,
+      storePath,
+      provider: modelRef.provider,
+    });
     const result = await params.api.runtime.agent
       .runEmbeddedAgent({
         sessionId: subagentSessionId,
@@ -275,6 +284,8 @@ async function runRecallSubagent(params: {
         prompt,
         provider: modelRef.provider,
         model: modelRef.model,
+        agentHarnessRuntimeOverride,
+        authProfileId,
         lane: ACTIVE_MEMORY_RECALL_LANE,
         timeoutMs: embeddedTimeoutMs,
         runId: subagentSessionId,

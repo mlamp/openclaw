@@ -54,6 +54,7 @@ import {
   buildPluginStatusLine,
   persistPluginStatusLines,
   resolveCanonicalSessionKeyFromSessionId,
+  resolveRecallRuntimePins,
   resolveStatusUpdateAgentId,
 } from "./session.js";
 import {
@@ -231,7 +232,16 @@ export default definePluginEntry({
                 modelId: ctx.modelId,
               })
             : { provider: ctx.modelProviderId, model: ctx.modelId }) ?? {};
+        const runtimePins = resolveRecallRuntimePins({
+          api,
+          config: liveConfig,
+          agentId: timeoutAgentId,
+          sessionKey: ctx.sessionKey,
+          sessionId: ctx.sessionId,
+          provider: timeoutModelRef.provider,
+        });
         const cliDispatchEligibility = api.runtime.agent.resolveCliBackendDispatchEligibility({
+          ...runtimePins,
           provider: timeoutModelRef.provider,
           model: timeoutModelRef.model,
           config: liveConfig,

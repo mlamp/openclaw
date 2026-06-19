@@ -55,23 +55,23 @@ function resolveEmbeddedCliBackendDispatch(
   if (params.cliBackendDispatch !== "subscription-auth") {
     return undefined;
   }
-  // The one-shot bridge cannot carry authenticated source-channel delivery
-  // context; private source replies must stay with their embedded owner.
-  if (params.sourceReplyDeliveryMode === "message_tool_only") {
-    return undefined;
-  }
-  // The CLI runner needs the caller-owned transcript path; runs without one
-  // stay on the passthrough where session targets are resolved internally.
-  const sessionFile = params.sessionFile?.trim();
-  if (!sessionFile) {
-    return undefined;
-  }
-  const toolsAllow = resolveDispatchableToolsAllow(params);
-  if (!toolsAllow) {
-    return undefined;
-  }
   const eligibility = resolveEmbeddedCliBackendDispatchEligibility(params);
-  return eligibility ? { provider: eligibility.provider, sessionFile, toolsAllow } : undefined;
+  if (!eligibility) {
+    return undefined;
+  }
+  const sessionFile = params.sessionFile?.trim();
+  const toolsAllow = resolveDispatchableToolsAllow(params);
+  // The bridge requires a caller-owned transcript and a representable tool /
+  // delivery policy. An explicit CLI owner must fail rather than spend API credits.
+  if (params.sourceReplyDeliveryMode === "message_tool_only" || !sessionFile || !toolsAllow) {
+    if (params.agentHarnessId || params.agentHarnessRuntimeOverride) {
+      throw new Error(
+        "The selected CLI runtime cannot preserve this run's transcript, source-delivery, or tool policy",
+      );
+    }
+    return undefined;
+  }
+  return { provider: eligibility.provider, sessionFile, toolsAllow };
 }
 
 /**
@@ -230,6 +230,7 @@ async function runEmbeddedAgentViaCliBackend(
       imageOrder: params.imageOrder,
       media: params.media,
       provider: dispatch.provider,
+      authProfileId: params.authProfileId,
       model: params.model,
       modelHasVision: params.modelHasVision,
       contextWindow: params.contextWindow,

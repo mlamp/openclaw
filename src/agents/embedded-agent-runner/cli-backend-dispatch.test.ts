@@ -34,6 +34,8 @@ vi.mock("../model-auth.js", () => ({
 }));
 vi.mock("../model-runtime-aliases.js", () => ({
   resolveCliRuntimeExecutionProvider,
+  isCliRuntimeAliasForProvider: ({ provider, runtime }: { provider: string; runtime: string }) =>
+    provider === "anthropic" && runtime === "claude-cli",
 }));
 vi.mock("../../plugins/cli-backends.runtime.js", () => ({
   resolveRuntimeCliBackends,
@@ -257,6 +259,47 @@ describe("runEmbeddedAgentViaCliBackendIfEligible gate", () => {
     ).toBeUndefined();
     expect(runCliAgent).not.toHaveBeenCalled();
   });
+
+  it.each(["oauth", "api-key", "mixed"])(
+    "honors an explicit CLI owner and profile despite %s auth heuristics",
+    async (mode) => {
+      resolveModelAuthMode.mockReturnValue(mode);
+      const result = await runGate({
+        provider: "anthropic",
+        agentHarnessRuntimeOverride: "claude-cli",
+        authProfileId: "anthropic:chosen",
+      });
+      expect(result).toBeDefined();
+      expect(runCliAgent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          provider: "claude-cli",
+          authProfileId: "anthropic:chosen",
+        }),
+      );
+      expect(resolveModelAuthMode).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([{ toolsAllow: [] }, { disableTools: true }, { sessionFile: undefined }])(
+    "rejects an unrepresentable explicit CLI run instead of returning API passthrough (%j)",
+    async (policy) => {
+      await expect(
+        runGate({ provider: "anthropic", agentHarnessRuntimeOverride: "claude-cli", ...policy }),
+      ).rejects.toThrow("cannot preserve");
+      expect(runCliAgent).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(["openclaw", "codex"])(
+    "keeps explicit %s harness ownership over automatic CLI discovery",
+    async (runtime) => {
+      resolveCliRuntimeExecutionProvider.mockReturnValue("claude-cli");
+      expect(
+        await runGate({ provider: "anthropic", agentHarnessRuntimeOverride: runtime }),
+      ).toBeUndefined();
+      expect(runCliAgent).not.toHaveBeenCalled();
+    },
+  );
 
   it("dispatches claude-cli runs with subscription (oauth) credentials", async () => {
     expect(await runGate({ agentDir: "/agents/main", workspaceDir: "/workspace" })).toBeDefined();

@@ -14,7 +14,10 @@ import {
   resolveAuthProfileOrder,
   resolveModelAuthMode,
 } from "../model-auth.js";
-import { resolveCliRuntimeExecutionProvider } from "../model-runtime-aliases.js";
+import {
+  isCliRuntimeAliasForProvider,
+  resolveCliRuntimeExecutionProvider,
+} from "../model-runtime-aliases.js";
 
 type EmbeddedCliBackendDispatchEligibilityParams = {
   provider?: string;
@@ -22,6 +25,8 @@ type EmbeddedCliBackendDispatchEligibilityParams = {
   agentId?: string;
   /** Explicitly pinned auth profile for the run; decisive when it resolves. */
   authProfileId?: string;
+  agentHarnessId?: string;
+  agentHarnessRuntimeOverride?: string;
   config?: OpenClawConfig;
   agentDir?: string;
   workspaceDir?: string;
@@ -43,6 +48,20 @@ export function resolveEmbeddedCliBackendDispatchEligibility(
     resolveRuntimeCliBackends().map((backend) => [normalizeProviderId(backend.id), backend]),
   );
   const requestedProvider = normalizeProviderId(params.provider ?? "");
+  const explicitRuntime = params.agentHarnessId ?? params.agentHarnessRuntimeOverride;
+  if (explicitRuntime) {
+    const runtime = normalizeProviderId(explicitRuntime);
+    // A concrete execution owner wins over credential heuristics; otherwise a
+    // session-pinned CLI can silently spend API credits from a mixed auth store.
+    const compatible =
+      runtime === requestedProvider ||
+      isCliRuntimeAliasForProvider({
+        provider: requestedProvider,
+        runtime,
+        cfg: params.config,
+      });
+    return compatible && backends.has(runtime) ? { provider: runtime } : undefined;
+  }
   const provider = backends.has(requestedProvider)
     ? requestedProvider
     : normalizeProviderId(

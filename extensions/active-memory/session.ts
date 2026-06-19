@@ -1,3 +1,9 @@
+import { resolveProviderIdForAuth } from "openclaw/plugin-sdk/agent-runtime";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import {
+  resolvePersistedSessionRuntimeId,
+  resolveSessionModelRef,
+} from "openclaw/plugin-sdk/model-session-runtime";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import {
   deliveryContextFromSession,
@@ -45,6 +51,44 @@ function resolveCanonicalSessionKeyFromSessionId(params: {
   } catch {
     return undefined;
   }
+}
+
+function resolveRecallRuntimePins(params: {
+  api: OpenClawPluginApi;
+  config: OpenClawConfig;
+  agentId: string;
+  sessionKey?: string;
+  sessionId?: string;
+  storePath?: string;
+  provider?: string;
+}): { agentHarnessRuntimeOverride?: string; authProfileId?: string } {
+  const sessionKey = params.sessionKey ?? resolveCanonicalSessionKeyFromSessionId(params);
+  if (!sessionKey || !params.provider) {
+    return {};
+  }
+  const entry = params.api.runtime.agent.session.getSessionEntry({
+    agentId: params.agentId,
+    sessionKey,
+    storePath: params.storePath,
+  });
+  if (!entry) {
+    return {};
+  }
+  const parentProvider = resolveSessionModelRef(params.config, entry, params.agentId).provider;
+  // Budgeting and dispatch share parent pins, but a recall model on another
+  // provider must never inherit the parent's runtime or credential selection.
+  if (
+    resolveProviderIdForAuth(parentProvider, { config: params.config }) !==
+    resolveProviderIdForAuth(params.provider, { config: params.config })
+  ) {
+    return {};
+  }
+  return {
+    agentHarnessRuntimeOverride: entry.modelSelectionLocked
+      ? resolvePersistedSessionRuntimeId(entry)
+      : entry.agentRuntimeOverride,
+    authProfileId: entry.authProfileOverride,
+  };
 }
 
 function resolveRecallRunChannelContext(params: {
@@ -281,5 +325,6 @@ export {
   persistPluginStatusLines,
   resolveCanonicalSessionKeyFromSessionId,
   resolveRecallRunChannelContext,
+  resolveRecallRuntimePins,
   resolveStatusUpdateAgentId,
 };
