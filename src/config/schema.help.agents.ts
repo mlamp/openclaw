@@ -152,6 +152,8 @@ export const AGENT_FIELD_HELP: Record<string, string> = {
     "Safety window in seconds for each built-in compaction model request (default: 180). Multi-stage compaction refreshes the window as each serial request starts, so the complete compaction can take longer; plugin-owned compaction receives one window for the complete operation.",
   "agents.defaults.compaction.model":
     "Optional provider/model or configured bare alias used only for compaction summarization. Bare aliases resolve before dispatch; a configured literal model ID wins if it collides with an alias. Leave unset to keep using the primary agent model.",
+  "agents.defaults.compaction.effort":
+    "Optional CLI reasoning effort for OpenClaw-triggered native compaction. Unset inherits session thinking; native mid-turn auto-compaction remains runtime-owned. Accepted: off, minimal, low, medium, high, xhigh, adaptive, max.",
   "agents.defaults.compaction.maxActiveTranscriptBytes":
     'Byte threshold that triggers normal preflight local compaction when the transcript window the model sees (since the latest compaction or reset) reaches this size (bytes or strings like "20mb"). Set to 0 or leave unset to disable. Also caps Codex app-server native rollout transcripts; oversized native threads restart fresh.',
   "agents.defaults.compaction.notifyUser":
@@ -162,6 +164,8 @@ export const AGENT_FIELD_HELP: Record<string, string> = {
     "Enables pre-compaction memory flush before the runtime performs stronger history reduction near token limits. Keep enabled unless you intentionally disable memory side effects in constrained environments.",
   "agents.defaults.compaction.memoryFlush.model":
     "Optional provider/model override used only for pre-compaction memory flush turns. Set this to a local model such as ollama/qwen3:8b when durable memory extraction should avoid the active session's paid model. The override is exact and does not inherit the active model fallback chain.",
+  "agents.defaults.compaction.memoryFlush.effort":
+    "Optional CLI reasoning effort for pre-compaction memory-flush turns. Unset inherits backend effort. Accepted: off, minimal, low, medium, high, xhigh, adaptive, max.",
   "agents.defaults.compaction.memoryFlush.softThresholdTokens":
     "Threshold distance to compaction (in tokens) that triggers pre-compaction memory flush execution. Use earlier thresholds for safer persistence, or tighter thresholds for lower flush frequency.",
   "agents.defaults.compaction.memoryFlush.forceFlushTranscriptBytes":

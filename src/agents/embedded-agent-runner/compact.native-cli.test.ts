@@ -99,7 +99,10 @@ describe("native CLI manual compaction", () => {
 
     const result = await testing.compactNativeCliSession({
       runtime: "claude-cli",
-      compactParams: compactParams(),
+      compactParams: compactParams({
+        config: { agents: { defaults: { compaction: { effort: "high", timeoutSeconds: 240 } } } },
+        thinkLevel: "low",
+      }),
     });
 
     expect(result).toEqual({
@@ -115,6 +118,8 @@ describe("native CLI manual compaction", () => {
           }),
         }),
         prompt: "/compact keep decisions",
+        thinkLevel: "high",
+        timeoutMs: 240_000,
         provider: "claude-cli",
         modelProvider: "anthropic",
         cliSessionId: "native-session",

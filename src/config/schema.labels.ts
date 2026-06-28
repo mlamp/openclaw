@@ -662,12 +662,14 @@ export const FIELD_LABELS: Record<string, string> = {
   "agents.defaults.compaction.postCompactionSections": "Post-Compaction Context Sections",
   "agents.defaults.compaction.timeoutSeconds": "Compaction Timeout (Seconds)",
   "agents.defaults.compaction.model": "Compaction Model Override",
+  "agents.defaults.compaction.effort": "Compaction Effort Override",
   "agents.defaults.compaction.maxActiveTranscriptBytes":
     "Compaction Active Transcript Size Threshold",
   "agents.defaults.compaction.notifyUser": "Compaction Notify User",
   "agents.defaults.compaction.memoryFlush": "Compaction Memory Flush",
   "agents.defaults.compaction.memoryFlush.enabled": "Compaction Memory Flush Enabled",
   "agents.defaults.compaction.memoryFlush.model": "Compaction Memory Flush Model Override",
+  "agents.defaults.compaction.memoryFlush.effort": "Compaction Memory Flush Effort Override",
   "agents.defaults.compaction.memoryFlush.softThresholdTokens":
     "Compaction Memory Flush Soft Threshold",
   "agents.defaults.compaction.memoryFlush.forceFlushTranscriptBytes":

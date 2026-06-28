@@ -345,44 +345,51 @@ describe("runCliAgent spawn path", () => {
       expectedEnv: { CLAUDE_CODE_DISABLE_1M_CONTEXT: "1" },
     },
     { selection: "1m", preparedEnv: undefined, expectedEnv: undefined },
-  ])(
-    "forwards the $selection Claude context-window env policy to a paired node",
-    async (testCase) => {
-      const invokeNode = vi.fn(async (params: Parameters<typeof invokeNodeClaudeCliRun>[0]) => {
-        params.onProgress(
-          `${JSON.stringify({
-            type: "result",
-            session_id: `node-context-${testCase.selection}`,
-            result: "ok",
-          })}\n`,
-        );
-        return {
-          ok: true,
-          payloadJSON: JSON.stringify({ exitCode: 0, stderrTail: "", truncated: false }),
-        };
-      });
-      setCliRunnerExecuteTestDeps({ invokeNodeClaudeCliRun: invokeNode });
-      const context = buildPreparedCliRunContext({
-        model: "claude-fable-5",
-        runId: `run-node-context-${testCase.selection}`,
-        sessionEntry: {
-          sessionId: `openclaw-context-${testCase.selection}`,
-          updatedAt: 1,
-          execHost: "node",
-          execNode: "node-a",
-        },
-        backend: { clearEnv: ["CLAUDE_CODE_DISABLE_1M_CONTEXT"] },
-        preparedEnv: testCase.preparedEnv,
-      });
-
-      await expect(executePreparedCliRun(context)).resolves.toMatchObject({ text: "ok" });
-      expect(invokeNode).toHaveBeenCalledOnce();
-      expect(invokeNode.mock.calls[0]?.[0]).toMatchObject({
-        clearEnv: ["CLAUDE_CODE_DISABLE_1M_CONTEXT"],
-      });
-      expect(invokeNode.mock.calls[0]?.[0].env).toEqual(testCase.expectedEnv);
+    {
+      selection: "effort-high",
+      preparedEnv: { CLAUDE_CODE_EFFORT_LEVEL: "high" },
+      expectedEnv: { CLAUDE_CODE_EFFORT_LEVEL: "high" },
     },
-  );
+    {
+      selection: "effort-adaptive",
+      preparedEnv: { CLAUDE_CODE_EFFORT_LEVEL: "auto" },
+      expectedEnv: { CLAUDE_CODE_EFFORT_LEVEL: "auto" },
+    },
+  ])("forwards the $selection Claude execution env policy to a paired node", async (testCase) => {
+    const invokeNode = vi.fn(async (params: Parameters<typeof invokeNodeClaudeCliRun>[0]) => {
+      params.onProgress(
+        `${JSON.stringify({
+          type: "result",
+          session_id: `node-context-${testCase.selection}`,
+          result: "ok",
+        })}\n`,
+      );
+      return {
+        ok: true,
+        payloadJSON: JSON.stringify({ exitCode: 0, stderrTail: "", truncated: false }),
+      };
+    });
+    setCliRunnerExecuteTestDeps({ invokeNodeClaudeCliRun: invokeNode });
+    const context = buildPreparedCliRunContext({
+      model: "claude-fable-5",
+      runId: `run-node-context-${testCase.selection}`,
+      sessionEntry: {
+        sessionId: `openclaw-context-${testCase.selection}`,
+        updatedAt: 1,
+        execHost: "node",
+        execNode: "node-a",
+      },
+      backend: { clearEnv: ["CLAUDE_CODE_DISABLE_1M_CONTEXT"] },
+      preparedEnv: testCase.preparedEnv,
+    });
+
+    await expect(executePreparedCliRun(context)).resolves.toMatchObject({ text: "ok" });
+    expect(invokeNode).toHaveBeenCalledOnce();
+    expect(invokeNode.mock.calls[0]?.[0]).toMatchObject({
+      clearEnv: ["CLAUDE_CODE_DISABLE_1M_CONTEXT"],
+    });
+    expect(invokeNode.mock.calls[0]?.[0].env).toEqual(testCase.expectedEnv);
+  });
 
   it("surfaces a node-placed Claude synthetic empty terminal through the shared parser", async () => {
     const invokeNode = vi.fn(async (params: Parameters<typeof invokeNodeClaudeCliRun>[0]) => {

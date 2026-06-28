@@ -128,6 +128,12 @@ When unset, compaction starts with the active session model. If summarization fa
 
 In safeguard mode, provider timeouts and rate limits from built-in summarization remain eligible for that chain. Caller cancellation and failed safeguard quality checks do not trigger a model switch.
 
+### CLI compaction effort in this fork
+
+For Claude CLI sessions, OpenClaw checks fresh native token usage before the next turn and invokes native `/compact` when its context threshold is reached. Set `agents.defaults.compaction.effort` to choose effort for that operation and manual `/compact`; `timeoutSeconds` bounds the native command. Set `compaction.memoryFlush.effort` independently for CLI memory extraction. Both effort fields accept `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `adaptive`, or `max`.
+
+An unset compaction effort inherits session thinking; an unset memory-flush effort inherits the backend. `minimal` maps to `low`, and `adaptive` releases a pinned effort to Claude's automatic selection. `off` keeps existing effort where Claude supports disabling thinking; mandatory-adaptive models use their lowest effort. These options do not change Claude's spontaneous mid-turn auto-compaction, which remains native-owned. Native compaction does not shrink OpenClaw's mirrored transcript, so its byte threshold is not a Claude compaction trigger.
+
 ### Identifier preservation
 
 Compaction summarization preserves opaque identifiers by default (`identifierPolicy: "strict"`). Override with `identifierPolicy: "off"` to disable. Custom guidance belongs in a compaction provider's `summarize()` implementation.

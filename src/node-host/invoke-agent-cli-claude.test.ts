@@ -116,11 +116,13 @@ describe("Claude CLI node command", () => {
           env: {
             NO_COLOR: "1",
             CLAUDE_CODE_DISABLE_1M_CONTEXT: "1",
+            CLAUDE_CODE_EFFORT_LEVEL: "high",
             CLAUDE_CODE_OAUTH_TOKEN: "selected-node-token",
           },
           clearEnv: [
             "ANTHROPIC_API_KEY",
             "CLAUDE_CODE_DISABLE_1M_CONTEXT",
+            "CLAUDE_CODE_EFFORT_LEVEL",
             "CLAUDE_CODE_OAUTH_TOKEN",
           ],
           idleTimeoutMs: 1_000,
@@ -134,9 +136,15 @@ describe("Claude CLI node command", () => {
       env: {
         NO_COLOR: "1",
         CLAUDE_CODE_DISABLE_1M_CONTEXT: "1",
+        CLAUDE_CODE_EFFORT_LEVEL: "high",
         CLAUDE_CODE_OAUTH_TOKEN: "selected-node-token",
       },
-      clearEnv: ["ANTHROPIC_API_KEY", "CLAUDE_CODE_DISABLE_1M_CONTEXT", "CLAUDE_CODE_OAUTH_TOKEN"],
+      clearEnv: [
+        "ANTHROPIC_API_KEY",
+        "CLAUDE_CODE_DISABLE_1M_CONTEXT",
+        "CLAUDE_CODE_EFFORT_LEVEL",
+        "CLAUDE_CODE_OAUTH_TOKEN",
+      ],
     });
   });
 

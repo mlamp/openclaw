@@ -150,7 +150,9 @@ export async function compactNativeCliSession(params: {
         provider: runtime,
         modelProvider: params.compactParams.provider,
         model: params.compactParams.model,
-        thinkLevel: params.compactParams.thinkLevel,
+        thinkLevel:
+          params.compactParams.config?.agents?.defaults?.compaction?.effort ??
+          params.compactParams.thinkLevel,
         timeoutMs,
         runId,
         cliSessionId,

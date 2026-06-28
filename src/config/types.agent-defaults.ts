@@ -414,6 +414,8 @@ export type AgentCompactionConfig = {
    * When set, compaction uses this model instead of the agent's primary model.
    * Falls back to the primary model when unset. */
   model?: string;
+  /** Per-call CLI compaction effort; unset inherits the session thinking level. */
+  effort?: Exclude<AgentThinkingLevel, "ultra">;
   /** Safety window in seconds for each built-in compaction model request (default: 180). */
   timeoutSeconds?: number;
   /**
@@ -442,6 +444,8 @@ export type AgentCompactionMemoryFlushConfig = {
   enabled?: boolean;
   /** Optional provider/model override used only for pre-compaction memory flush turns. */
   model?: string;
+  /** Per-call CLI memory-flush effort; unset inherits the backend effort. */
+  effort?: Exclude<AgentThinkingLevel, "ultra">;
   /** Run the memory flush when context is within this many tokens of the compaction threshold. */
   softThresholdTokens?: number;
   /**

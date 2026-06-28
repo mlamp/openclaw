@@ -163,11 +163,13 @@ export const AgentDefaultsSchema = z
         postIndexSync: z.enum(["off", "async", "await"]).optional(),
         postCompactionSections: z.array(z.string()).optional(),
         model: z.string().optional(),
+        effort: AgentThinkingLevelSchema.exclude(["ultra"]).optional(),
         timeoutSeconds: z.number().int().positive().optional(),
         memoryFlush: z
           .object({
             enabled: z.boolean().optional(),
             model: z.string().optional(),
+            effort: AgentThinkingLevelSchema.exclude(["ultra"]).optional(),
             softThresholdTokens: z.number().int().nonnegative().optional(),
             forceFlushTranscriptBytes: NonNegativeByteSizeSchema.optional(),
           })

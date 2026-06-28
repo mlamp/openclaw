@@ -249,6 +249,17 @@ function resolveClaudeCliEffortArgAction(
   }
 }
 
+/** Project effort at the provider boundary so process env cannot override a per-call choice. */
+export function resolveClaudeCliEffortEnv(
+  thinkingLevel: CliBackendResolveExecutionArgsContext["thinkingLevel"],
+  modelId?: string,
+): Record<string, string> | undefined {
+  const action = resolveClaudeCliEffortArgAction(thinkingLevel, modelId);
+  return action.mode === "preserve"
+    ? undefined
+    : { CLAUDE_CODE_EFFORT_LEVEL: action.mode === "set" ? action.effort : "auto" };
+}
+
 function stripClaudeEffortArgs(args: readonly string[]): string[] {
   const normalized: string[] = [];
   for (let i = 0; i < args.length; i += 1) {

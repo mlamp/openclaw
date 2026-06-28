@@ -27,6 +27,25 @@ function expectSchemaFailurePath(result: SchemaParseResult, expectedPathPrefix: 
 }
 
 describe("agent defaults schema", () => {
+  it.each(["off", "minimal", "low", "medium", "high", "xhigh", "adaptive", "max"])(
+    "preserves fork CLI effort %s for compaction and memory flush",
+    (effort) => {
+      const compaction = { effort, memoryFlush: { effort } };
+      expect(AgentDefaultsSchema.parse({ compaction }).compaction).toEqual(compaction);
+    },
+  );
+
+  it.each(["ultra", "invalid", 3])("rejects invalid fork CLI effort %s", (effort) => {
+    expectSchemaFailurePath(
+      AgentDefaultsSchema.safeParse({ compaction: { effort } }),
+      "compaction.effort",
+    );
+    expectSchemaFailurePath(
+      AgentDefaultsSchema.safeParse({ compaction: { memoryFlush: { effort } } }),
+      "compaction.memoryFlush.effort",
+    );
+  });
+
   it("preserves separate run directories through config validation and list projection", () => {
     const result = validateConfigObject({
       agents: {

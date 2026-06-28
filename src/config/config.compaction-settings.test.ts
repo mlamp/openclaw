@@ -20,6 +20,7 @@ describe("config compaction settings", () => {
   it("preserves memory flush config values", () => {
     const compaction = materializeCompactionConfig({
       mode: "safeguard",
+      effort: "high",
       identifierPolicy: "strict",
       qualityGuard: {
         enabled: true,
@@ -31,12 +32,15 @@ describe("config compaction settings", () => {
       memoryFlush: {
         enabled: false,
         model: "ollama/qwen3:8b",
+        effort: "low",
         softThresholdTokens: 1234,
       },
       maxActiveTranscriptBytes: "20mb",
     });
 
     expect(compaction?.mode).toBe("safeguard");
+    expect(compaction?.effort).toBe("high");
+    expect(compaction?.memoryFlush?.effort).toBe("low");
     expect(compaction?.keepRecentTokens).toBeUndefined();
     expect(compaction?.identifierPolicy).toBe("strict");
     expect(compaction?.qualityGuard?.enabled).toBe(true);
