@@ -1,6 +1,7 @@
 // Hook integration coverage for direct and queued embedded compaction.
 import type { AgentMessage } from "openclaw/plugin-sdk/agent-core";
 import { beforeAll, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { FailoverError } from "../failover-error.js";
 import {
   applyExtraParamsToAgentMock,
   applyAgentCompactionSettingsFromConfigMock,
@@ -2364,6 +2365,58 @@ describe("compactEmbeddedAgentSession hooks (ownsCompaction engine)", () => {
     expect(result.compacted).toBe(false);
     expect(result.reason).toContain("timed out");
     expect(hookRunner.runAfterCompaction).not.toHaveBeenCalled();
+  });
+
+  it("logs the structured timeout cause when CLI compaction fails", async () => {
+    hookRunner.hasHooks.mockReturnValue(true);
+    // A CLI overall-timeout reaches the queued catch as a top-level FailoverError
+    // (cli-summarizer re-throws it unchanged); the catch must surface its
+    // code/reason/model/elapsed at the default level, not just the bare message.
+    contextEngineCompactMock.mockRejectedValue(
+      new FailoverError("CLI exceeded timeout (60s) and was terminated.", {
+        reason: "timeout",
+        code: "cli_overall_timeout",
+        provider: "claude-cli",
+        model: "opus",
+        sessionId: TEST_SESSION_ID,
+        lane: "global",
+        status: 408,
+      }),
+    );
+    // The harness resets modules in beforeAll, so spy the post-reset logger
+    // instance that compact.queued.ts actually holds.
+    const { log } = await import("./logger.js");
+    const warnSpy = vi.spyOn(log, "warn");
+
+    try {
+      const result = await compactEmbeddedAgentSession(wrappedCompactionArgs());
+
+      expect(result.ok).toBe(false);
+      expect(warnSpy).toHaveBeenCalledWith(
+        "context-engine compaction failed",
+        expect.objectContaining({
+          code: "cli_overall_timeout",
+          reason: "timeout",
+          model: "opus",
+          elapsedMs: expect.any(Number),
+          limitMs: expect.any(Number),
+          consoleMessage: expect.any(String),
+        }),
+      );
+      const meta = warnSpy.mock.calls.find(
+        ([message]) => message === "context-engine compaction failed",
+      )?.[1] as Record<string, unknown>;
+      // The single default-visible console line must name the timeout type,
+      // model, and elapsed/limit (issue #4 acceptance).
+      const consoleMessage = String(meta?.consoleMessage);
+      expect(consoleMessage).toContain("code=cli_overall_timeout");
+      expect(consoleMessage).toContain("reason=timeout");
+      expect(consoleMessage).toContain("model=opus");
+      expect(consoleMessage).toMatch(/elapsedMs=\d+/);
+      expect(consoleMessage).toMatch(/limitMs=\d+/);
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 
   it("forces engine-owned compaction for preflight-required budget compaction", async () => {

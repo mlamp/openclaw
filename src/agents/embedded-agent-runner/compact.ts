@@ -519,6 +519,9 @@ export async function compactEmbeddedAgentSessionDirect(
     });
     return fallbackResult.result;
   } catch (err) {
+    // Model-fallback exhaustion already surfaces each candidate failure (with
+    // model/reason/code) at the default level via logModelFallbackDecision, so the
+    // cause is debuggable here without an extra compaction-layer line.
     return fallbackFailureToCompactionResult(err);
   }
 }

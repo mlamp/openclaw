@@ -25,6 +25,7 @@ import { isDefaultAgentRuntimeId, normalizeOptionalAgentRuntimeId } from "../age
 import { resolveAgentDir, resolveSessionAgentIds } from "../agent-scope.js";
 import { resolveContextWindowInfo } from "../context-window-guard.js";
 import { DEFAULT_CONTEXT_TOKENS, DEFAULT_MODEL, DEFAULT_PROVIDER } from "../defaults.js";
+import { describeFailoverError } from "../failover-error.js";
 import { isRecoverableNativeHarnessBindingFailure } from "../harness/compaction-recovery.js";
 import { maybeCompactAgentHarnessSession } from "../harness/compaction.js";
 import { resolveAgentHarnessPolicy } from "../harness/policy.js";
@@ -55,6 +56,10 @@ import { readAgentModelContextTokens } from "./model-context-tokens.js";
 import { resolveModelAsync } from "./model.js";
 import type { EmbeddedAgentCompactResult } from "./types.js";
 import { normalizeContextTokenBudget } from "./utils.js";
+
+// Bound the captured failure stack so a slow-model compaction error cannot bloat
+// the log line; the structured cause (code/reason/model) carries the actionable detail.
+const COMPACTION_ERROR_STACK_MAX_CHARS = 2_000;
 
 function shouldFallbackAfterHarnessCompaction(
   result: EmbeddedAgentCompactResult | undefined,
@@ -381,6 +386,8 @@ export async function compactEmbeddedAgentSession(
         // matching how the run-loop overflow/timeout lanes handle it — instead
         // of throwing a raw rejection at callers that only inspect result.ok.
         let result: Awaited<ReturnType<typeof contextEngine.compact>>;
+        const compactStartedAt = Date.now();
+        const compactionTimeoutMs = resolveCompactionTimeoutMs(params.config);
         try {
           result = await compactContextEngineWithSafetyTimeout(
             contextEngine,
@@ -408,17 +415,50 @@ export async function compactEmbeddedAgentSession(
                 preflightCompactionTrigger: params.preflightCompactionTrigger,
               },
             },
-            resolveCompactionTimeoutMs(params.config),
+            compactionTimeoutMs,
             params.abortSignal,
           );
         } catch (compactErr) {
+          const errorMessage = formatErrorMessage(compactErr);
+          const elapsedMs = Date.now() - compactStartedAt;
+          const described = describeFailoverError(compactErr);
+          const provider = described.provider ?? ceProvider;
+          const model = described.model ?? ceModelId;
+          let errorStack: string | undefined;
+          if (compactErr instanceof Error && compactErr.stack) {
+            errorStack =
+              compactErr.stack.length > COMPACTION_ERROR_STACK_MAX_CHARS
+                ? `${compactErr.stack.slice(0, COMPACTION_ERROR_STACK_MAX_CHARS)}...(truncated)`
+                : compactErr.stack;
+          }
+          const codeSuffix = described.code ? ` code=${described.code}` : "";
+          const reasonSuffix = described.reason ? ` reason=${described.reason}` : "";
+          // consoleMessage is the one default-visible line; the structured fields below
+          // land in the file log. Without it operators only saw the bare failure text.
+          // Collapse whitespace so a multi-line cause cannot wrap the single line.
+          const errorSummary = errorMessage.replace(/\s+/g, " ");
+          const consoleMessage =
+            `context-engine compaction failed provider=${provider} model=${model}${codeSuffix}${reasonSuffix} ` +
+            `elapsedMs=${elapsedMs} limitMs=${compactionTimeoutMs} error=${errorSummary}`;
           log.warn("context-engine compaction failed", {
-            errorMessage: formatErrorMessage(compactErr),
+            errorMessage,
+            errorName: compactErr instanceof Error ? compactErr.name : undefined,
+            reason: described.reason,
+            code: described.code,
+            status: described.status,
+            provider,
+            model,
+            sessionId: described.sessionId ?? params.sessionId,
+            lane: described.lane ?? params.lane,
+            elapsedMs,
+            limitMs: compactionTimeoutMs,
+            errorStack,
+            consoleMessage,
           });
           result = {
             ok: false,
             compacted: false,
-            reason: formatErrorMessage(compactErr),
+            reason: errorMessage,
           };
         }
         const delegatedSessionId = result.result?.sessionId;
