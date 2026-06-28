@@ -92,6 +92,24 @@ This works with local models too, for example a second Ollama model dedicated to
 
 When unset, compaction starts with the active session model. If summarization fails with a model-fallback-eligible provider error, OpenClaw retries that compaction attempt through the session's existing model fallback chain. The fallback choice is temporary and is not written back to session state. An explicit `agents.defaults.compaction.model` override remains exact and does not inherit the session fallback chain.
 
+### Using a different effort
+
+For CLI backends (such as the Claude CLI), `agents.defaults.compaction.effort` sets the reasoning effort for compaction summary turns independently of the backend-wide effort. Set a lower level (for example `low`) to make compaction cheaper, or a higher one for richer summaries:
+
+```json5
+{
+  agents: {
+    defaults: {
+      compaction: {
+        effort: "low",
+      },
+    },
+  },
+}
+```
+
+Accepted values are `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `adaptive`, and `max`. A forcing level (`low` through `max`) applies to that summary turn even if a backend-wide effort is pinned via the backend environment; `off` and unset inherit the active backend effort (the Claude CLI has no off effort). The pre-compaction memory flush has its own `agents.defaults.compaction.memoryFlush.effort` with the same vocabulary.
+
 ### Identifier preservation
 
 Compaction summarization preserves opaque identifiers by default (`identifierPolicy: "strict"`). Override with `identifierPolicy: "off"` to disable, or `identifierPolicy: "custom"` plus `identifierInstructions` for custom guidance.

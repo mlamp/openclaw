@@ -977,11 +977,9 @@ describe("resolveCliBackendConfig google-gemini-cli defaults", () => {
   });
 
   it("preserves backend-owned per-run arg resolvers", () => {
-    const resolveExecutionArgs: CliBackendResolveExecutionArgs = ({ baseArgs }) => [
-      ...baseArgs,
-      "--effort",
-      "high",
-    ];
+    const resolveExecutionArgs: CliBackendResolveExecutionArgs = ({ baseArgs }) => ({
+      args: [...baseArgs, "--effort", "high"],
+    });
     runtimeBackendEntries = [
       createRuntimeBackendEntry({
         pluginId: "anthropic",

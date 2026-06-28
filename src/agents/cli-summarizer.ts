@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import type { ThinkLevel } from "../auto-reply/thinking.js";
 import type { OpenClawConfig } from "../config/config.js";
 import {
   resolveRotatedCompactionSessionFile,
@@ -60,6 +61,8 @@ export type RunCliSummarizerOneShotParams = {
   extraSystemPrompt?: string;
   timeoutMs?: number;
   authProfileId?: string;
+  /** Per-call reasoning effort for this one-shot; unset inherits the backend default. */
+  thinkLevel?: ThinkLevel;
 };
 
 /**
@@ -88,6 +91,7 @@ export async function runCliSummarizerOneShot(
       runId,
       extraSystemPrompt: params.extraSystemPrompt,
       authProfileId: params.authProfileId,
+      thinkLevel: params.thinkLevel,
     });
     const text = result.payloads?.[0]?.text?.trim() ?? "";
     return { text, usage: result.meta?.agentMeta?.usage };
@@ -218,6 +222,8 @@ export type CompactViaCliBackendParams = {
   maxPromptTokens?: number;
   timeoutMs?: number;
   extraSystemPrompt?: string;
+  /** Per-call reasoning effort for the compaction summary; unset inherits the backend default. */
+  thinkLevel?: ThinkLevel;
 };
 
 /**
@@ -285,6 +291,7 @@ export async function compactViaCliBackend(
       extraSystemPrompt: params.extraSystemPrompt,
       timeoutMs: params.timeoutMs,
       authProfileId: params.authProfileId,
+      thinkLevel: params.thinkLevel,
     });
     summary = result.text;
     usage = result.usage;
@@ -439,6 +446,8 @@ export type RunCliMemoryFlushParams = {
   maxPromptTokens?: number;
   timeoutMs?: number;
   agentId?: string;
+  /** Per-call reasoning effort for the memory-flush turn; unset inherits the backend default. */
+  thinkLevel?: ThinkLevel;
 };
 
 /**
@@ -475,6 +484,7 @@ export async function runCliMemoryFlush(
     extraSystemPrompt: params.flushSystemPrompt,
     timeoutMs: params.timeoutMs,
     authProfileId: params.authProfileId,
+    thinkLevel: params.thinkLevel,
   });
 
   if (result.text) {

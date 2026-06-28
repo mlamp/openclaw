@@ -486,7 +486,9 @@ describe("runCliAgent spawn path", () => {
 
   it("does not pass a Claude session id for side-question runs", async () => {
     mockSuccessfulCliRun();
-    const resolveExecutionArgs = vi.fn(({ baseArgs }) => [...baseArgs, "--max-turns", "1"]);
+    const resolveExecutionArgs = vi.fn(({ baseArgs }) => ({
+      args: [...baseArgs, "--max-turns", "1"],
+    }));
 
     await executePreparedCliRun(
       buildPreparedCliRunContext({
@@ -510,7 +512,9 @@ describe("runCliAgent spawn path", () => {
 
   it("applies backend-owned per-run args before spawning", async () => {
     mockSuccessfulCliRun();
-    const resolveExecutionArgs = vi.fn(({ baseArgs }) => [...baseArgs, "--effort", "high"]);
+    const resolveExecutionArgs = vi.fn(({ baseArgs }) => ({
+      args: [...baseArgs, "--effort", "high"],
+    }));
 
     await executePreparedCliRun(
       buildPreparedCliRunContext({
@@ -530,6 +534,53 @@ describe("runCliAgent spawn path", () => {
     expect(resolveArgsInput.baseArgs).toEqual(["-p", "--output-format", "stream-json"]);
     const input = mockCallArg(supervisorSpawnMock) as { argv?: string[] };
     expect(requireArgAfter(input.argv, "--effort")).toBe("high");
+  });
+
+  it("applies backend-owned per-call env after backend.env so it wins", async () => {
+    mockSuccessfulCliRun();
+    // The backend pins CLAUDE_CODE_EFFORT_LEVEL=high statically; the per-call
+    // resolveExecutionArgs env (low) must override it at spawn.
+    const resolveExecutionArgs = vi.fn(({ baseArgs }) => ({
+      args: [...baseArgs, "--effort", "low"],
+      env: { CLAUDE_CODE_EFFORT_LEVEL: "low" },
+    }));
+
+    await executePreparedCliRun(
+      buildPreparedCliRunContext({
+        provider: "claude-cli",
+        model: "sonnet",
+        runId: "run-claude-effort-env",
+        thinkLevel: "low",
+        backend: { env: { CLAUDE_CODE_EFFORT_LEVEL: "high" } },
+        resolveExecutionArgs,
+      }),
+    );
+
+    const input = mockCallArg(supervisorSpawnMock) as {
+      argv?: string[];
+      env?: Record<string, string>;
+    };
+    expect(requireArgAfter(input.argv, "--effort")).toBe("low");
+    expect(input.env?.CLAUDE_CODE_EFFORT_LEVEL).toBe("low");
+  });
+
+  it("accepts the legacy bare-array resolveExecutionArgs return shape", async () => {
+    mockSuccessfulCliRun();
+    // Back-compat: external CLI backends on the old contract return a bare argv
+    // array (no env); the runner must still apply those args.
+    const resolveExecutionArgs = vi.fn(({ baseArgs }) => [...baseArgs, "--legacy-flag"]);
+
+    await executePreparedCliRun(
+      buildPreparedCliRunContext({
+        provider: "claude-cli",
+        model: "sonnet",
+        runId: "run-claude-legacy-args",
+        resolveExecutionArgs,
+      }),
+    );
+
+    const input = mockCallArg(supervisorSpawnMock) as { argv?: string[] };
+    expect(input.argv).toContain("--legacy-flag");
   });
 
   it("passes OpenClaw skills to Claude as a session plugin", async () => {

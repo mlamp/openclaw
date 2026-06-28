@@ -60,9 +60,23 @@ export type CliBackendResolveExecutionArgsContext = {
   baseArgs: readonly string[];
 };
 
+export type CliBackendResolvedExecutionArgs = {
+  args: readonly string[];
+  /**
+   * Per-call environment overrides applied AFTER the static backend env so a
+   * request-scoped value (such as a mapped reasoning-effort level) wins over a
+   * statically pinned backend env var. The generic runner applies this map
+   * opaquely; the backend owns the variable names.
+   */
+  env?: Record<string, string>;
+};
+
 export type CliBackendResolveExecutionArgs = (
   ctx: CliBackendResolveExecutionArgsContext,
-) => readonly string[] | null | undefined;
+  // Returning a bare `readonly string[]` is the legacy argv-only contract and
+  // stays supported for external plugins; new code returns
+  // `CliBackendResolvedExecutionArgs` so it can also emit per-call env.
+) => CliBackendResolvedExecutionArgs | readonly string[] | null | undefined;
 
 export type CliBackendAuthEpochMode = "combined" | "profile-only";
 

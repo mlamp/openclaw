@@ -238,6 +238,31 @@ describe("compactEmbeddedAgentSessionDirect CLI runtime routing", () => {
     expect((result as { ok?: boolean }).ok).toBe(true);
   });
 
+  it("threads agents.defaults.compaction.effort into the CLI compaction one-shot", async () => {
+    resolveCliExecutionProviderForSessionMock.mockReturnValue("test-cli");
+
+    await compactEmbeddedAgentSessionDirect({
+      sessionId: "session-1",
+      sessionKey: "agent:main:session-1",
+      sessionFile: "/tmp/session.jsonl",
+      workspaceDir: "/tmp/workspace",
+      provider: "anthropic",
+      model: "claude-opus-4-7",
+      config: {
+        agents: {
+          defaults: {
+            compaction: { effort: "low" },
+            cliBackends: { "test-cli": { command: "test-cli" } },
+          },
+        },
+      } as never,
+    });
+
+    expect(compactViaCliBackendMock).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: "test-cli", thinkLevel: "low" }),
+    );
+  });
+
   it("keeps a non-CLI agent on the embedded SDK path", async () => {
     resolveCliExecutionProviderForSessionMock.mockReturnValue("anthropic");
 

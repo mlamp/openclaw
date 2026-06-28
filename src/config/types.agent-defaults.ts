@@ -541,6 +541,10 @@ export type AgentCompactionConfig = {
    * When set, compaction uses this model instead of the agent's primary model.
    * Falls back to the primary model when unset. */
   model?: string;
+  /** Optional per-call reasoning effort for CLI-backend compaction summaries.
+   * Overrides a backend-pinned effort for the summary turn only; unset inherits
+   * the active backend effort. */
+  effort?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "adaptive" | "max";
   /** Maximum time in seconds for a single compaction operation (default: 180). */
   timeoutSeconds?: number;
   /**
@@ -576,6 +580,10 @@ export type AgentCompactionMemoryFlushConfig = {
   enabled?: boolean;
   /** Optional provider/model override used only for pre-compaction memory flush turns. */
   model?: string;
+  /** Optional per-call reasoning effort for CLI-backend memory-flush turns.
+   * Overrides a backend-pinned effort for the flush turn only; unset inherits
+   * the active backend effort. */
+  effort?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "adaptive" | "max";
   /** Run the memory flush when context is within this many tokens of the compaction threshold. */
   softThresholdTokens?: number;
   /**

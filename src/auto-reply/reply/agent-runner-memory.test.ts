@@ -959,6 +959,41 @@ describe("runMemoryFlushIfNeeded", () => {
     );
   });
 
+  it("threads compaction.memoryFlush.effort into the CLI memory flush", async () => {
+    const sessionEntry: SessionEntry = {
+      sessionId: "session",
+      updatedAt: Date.now(),
+      totalTokens: 80_000,
+      compactionCount: 1,
+    };
+
+    await runMemoryFlushIfNeeded({
+      cfg: {
+        agents: {
+          defaults: {
+            cliBackends: { "codex-cli": { command: "codex" } },
+            compaction: { memoryFlush: { effort: "low" } },
+          },
+        },
+      },
+      followupRun: createTestFollowupRun({ provider: "codex-cli" }),
+      sessionCtx: { Provider: "whatsapp" } as unknown as TemplateContext,
+      defaultModel: "codex-cli/gpt-5.5",
+      agentCfgContextTokens: 100_000,
+      resolvedVerboseLevel: "off",
+      sessionEntry,
+      sessionStore: { main: sessionEntry },
+      sessionKey: "main",
+      isHeartbeat: false,
+      replyOperation: createReplyOperation(),
+    });
+
+    // compaction.memoryFlush.effort is read end-to-end into the flush one-shot.
+    expect(runCliMemoryFlushMock).toHaveBeenCalledWith(
+      expect.objectContaining({ thinkLevel: "low" }),
+    );
+  });
+
   it("routes memory flush through the CLI summarizer for CLI session runtime pins", async () => {
     cliBackendsTesting.setDepsForTest({
       resolveRuntimeCliBackends: () => [
