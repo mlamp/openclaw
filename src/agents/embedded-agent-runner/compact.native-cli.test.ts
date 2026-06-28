@@ -4,10 +4,12 @@ import { useAutoCleanupTempDirTracker } from "../../../test/helpers/temp-dir.js"
 import type { CliBackendPlugin } from "../../plugins/cli-backend.types.js";
 import type { PreparedAgentRunAdmission } from "../admitted-run-context.js";
 import { testing as cliBackendsTesting } from "../cli-backends.test-support.js";
+import { FailoverError } from "../failover-error.js";
 
 const tempDirs = useAutoCleanupTempDirTracker(afterEach);
 
-const { runCliAgentMock } = vi.hoisted(() => ({
+const { runCliAgentMock, warn } = vi.hoisted(() => ({
+  warn: vi.fn(),
   runCliAgentMock: vi.fn(async (_params: { preparedRunAdmission?: PreparedAgentRunAdmission }) => ({
     meta: {
       durationMs: 1,
@@ -17,6 +19,7 @@ const { runCliAgentMock } = vi.hoisted(() => ({
 }));
 
 vi.mock("../cli-runner.js", () => ({ runCliAgent: runCliAgentMock }));
+vi.mock("./logger.js", () => ({ log: { warn } }));
 
 const { testing } = await import("./compact.js");
 
@@ -87,6 +90,7 @@ function compactParams(overrides: Record<string, unknown> = {}) {
 afterEach(() => {
   cliBackendsTesting.resetDepsForTest();
   runCliAgentMock.mockClear();
+  warn.mockClear();
 });
 
 describe("native CLI manual compaction", () => {
@@ -133,6 +137,37 @@ describe("native CLI manual compaction", () => {
     await expect(preparedRunAdmission.admit("embedded")).rejects.toThrow(
       "prepared execution context is already closed",
     );
+  });
+
+  it("logs classified native compaction failure at default level without raw provider output", async () => {
+    registerBackend();
+    runCliAgentMock.mockRejectedValueOnce(
+      new FailoverError("private transcript content", {
+        reason: "timeout",
+        code: "cli_no_output_timeout",
+        status: 408,
+      }),
+    );
+    const result = await testing.compactNativeCliSession({
+      runtime: "claude-cli",
+      compactParams: compactParams(),
+    });
+    expect(result).toMatchObject({ ok: false, compacted: false });
+    expect(warn).toHaveBeenCalledOnce();
+    expect(warn).toHaveBeenCalledWith(
+      "native CLI compaction failed",
+      expect.objectContaining({
+        provider: "claude-cli",
+        model: "opus",
+        reason: "timeout",
+        code: "cli_no_output_timeout",
+        status: 408,
+        elapsedMs: expect.any(Number),
+        limitMs: 180_000,
+        consoleMessage: expect.stringContaining("code=cli_no_output_timeout"),
+      }),
+    );
+    expect(JSON.stringify(warn.mock.calls)).not.toContain("private transcript content");
   });
 
   it("fails explicitly when an owning backend has no resumable session", async () => {

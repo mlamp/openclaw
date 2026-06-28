@@ -1,11 +1,13 @@
 /**
  * Public facade and fallback coordinator for embedded-agent compaction.
  */
+import { truncateUtf16Safe } from "@openclaw/normalization-core/utf16-slice";
 import { resolveAgentModelFallbackValues } from "../../config/model-input.js";
 import { loadSessionEntryReadOnly } from "../../config/sessions/session-accessor.js";
 import { projectPublicSessionEntry } from "../../config/sessions/session-entry-projection.js";
 import { isAbortError } from "../../infra/abort-signal.js";
 import { formatErrorMessage } from "../../infra/errors.js";
+import { redactSensitiveText } from "../../logging/redact.js";
 import { getCurrentPluginMetadataSnapshot } from "../../plugins/current-plugin-metadata-snapshot.js";
 import { withPluginRuntimeGenerationScope } from "../../plugins/runtime/generation-scope.js";
 import { resolveSessionPinnedHarnessId } from "../../sessions/agent-harness-session-key.js";
@@ -21,7 +23,7 @@ import {
 import { resolveCliBackendConfig } from "../cli-backends.js";
 import { hasMeaningfulConversationContent } from "../compaction-real-conversation.js";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "../defaults.js";
-import { coerceToFailoverError } from "../failover-error.js";
+import { coerceToFailoverError, describeFailoverError } from "../failover-error.js";
 import { ensureSelectedAgentHarnessPlugin } from "../harness/runtime-plugin.js";
 import { isFallbackSummaryError } from "../model-fallback-attempt.js";
 import { resolveModelCandidateChain } from "../model-fallback-candidates.js";
@@ -56,6 +58,7 @@ import { resolveCompactionTimeoutMs } from "./compaction-safety-timeout.js";
 import { prepareCompactionSessionAgent } from "./compaction-session-agent.js";
 import type { PreparedCompactEmbeddedAgentSessionParams } from "./direct-compaction-preparation.js";
 import { compactEmbeddedAgentSessionDirectOnce } from "./direct-compaction.js";
+import { log } from "./logger.js";
 import { readCompactionAccountingRecorder } from "./run/compaction-accounting-bridge.js";
 import { prepareEmbeddedSessionActiveProjectKeys } from "./session-prompt-state.js";
 import type { EmbeddedAgentCompactResult } from "./types.js";
@@ -73,6 +76,15 @@ function lockedHarnessCompactionFailure(runtime: string): EmbeddedAgentCompactRe
     reason: `Model selection is locked to native agent harness "${runtime}"; generic compaction is unavailable.`,
     failure: { reason: "model_selection_locked" },
   };
+}
+
+function boundedNativeCompactionLogField(value: string | undefined): string | undefined {
+  return value === undefined
+    ? undefined
+    : truncateUtf16Safe(
+        redactSensitiveText(value, { mode: "tools" }).replace(/[\s\p{C}]+/gu, " "),
+        160,
+      );
 }
 
 export async function compactNativeCliSession(params: {
@@ -120,6 +132,8 @@ export async function compactNativeCliSession(params: {
     sessionAgentId,
     "agents.native-compaction",
   );
+  const timeoutMs = resolveCompactionTimeoutMs(params.compactParams.config);
+  const compactStartedAt = Date.now();
   try {
     const runControlOperation = async () => {
       await runCliAgent({
@@ -137,7 +151,7 @@ export async function compactNativeCliSession(params: {
         modelProvider: params.compactParams.provider,
         model: params.compactParams.model,
         thinkLevel: params.compactParams.thinkLevel,
-        timeoutMs: resolveCompactionTimeoutMs(params.compactParams.config),
+        timeoutMs,
         runId,
         cliSessionId,
         ...(cliSessionBinding ? { cliSessionBinding } : {}),
@@ -170,6 +184,23 @@ export async function compactNativeCliSession(params: {
     if (signal?.aborted && (isAbortError(err) || err === signal.reason)) {
       throw err;
     }
+    const described = describeFailoverError(err);
+    const provider = boundedNativeCompactionLogField(runtime);
+    const model = boundedNativeCompactionLogField(params.compactParams.model);
+    const code = boundedNativeCompactionLogField(described.code);
+    const elapsedMs = Date.now() - compactStartedAt;
+    // Default-visible diagnostics carry the classified cause, never raw provider
+    // messages, prompts, credentials, or stacks that can contain session content.
+    log.warn("native CLI compaction failed", {
+      provider,
+      model,
+      reason: described.reason,
+      code,
+      status: described.status,
+      elapsedMs,
+      limitMs: timeoutMs,
+      consoleMessage: `native CLI compaction failed provider=${provider} model=${model ?? "unknown"} reason=${described.reason ?? "unknown"} code=${code ?? "unknown"} elapsedMs=${elapsedMs} limitMs=${timeoutMs}`,
+    });
     return {
       ok: false,
       compacted: false,
