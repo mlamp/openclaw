@@ -3077,6 +3077,17 @@ describe("resolveCliNoOutputTimeoutMs", () => {
     });
     expect(timeoutMs).toBe(180_000);
   });
+
+  it("scales the fresh no-output watchdog with the compaction one-shot timeout", () => {
+    // Compaction summarize is always a fresh exec; the no-output watchdog must
+    // track the (now configurable) one-shot timeout instead of being pinned just
+    // under the old hard 60s. The cap is timeoutMs - 1000.
+    const fresh = (timeoutMs: number) =>
+      resolveCliNoOutputTimeoutMs({ backend: { command: "claude" }, timeoutMs, useResume: false });
+    expect(fresh(60_000)).toBe(59_000); // old hard default: watchdog ~= whole timeout (the bug)
+    expect(fresh(168_000)).toBe(167_000); // 180s budget - 12s inner margin
+    expect(fresh(180_000)).toBe(179_000);
+  });
 });
 
 describe("resolveCliRunTimeoutOverrideMs", () => {
