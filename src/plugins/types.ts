@@ -198,6 +198,7 @@ export type {
   CliBackendPrepareExecutionContext,
   CliBackendResolveExecutionArgs,
   CliBackendResolveExecutionArgsContext,
+  CliBackendResolvedExecutionArgs,
   CliBackendSideQuestionToolMode,
   CliBackendThinkingLevel,
   CliBackendPlugin,

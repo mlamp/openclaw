@@ -25,6 +25,7 @@ import { requestHeartbeat as requestHeartbeatImpl } from "../../infra/heartbeat-
 import { sanitizeHostExecEnv } from "../../infra/host-env-security.js";
 import { shouldUseInternalSourceReplySink } from "../../infra/outbound/internal-source-reply.js";
 import { enqueueSystemEvent as enqueueSystemEventImpl } from "../../infra/system-events.js";
+import type { CliBackendResolvedExecutionArgs } from "../../plugins/types.js";
 import { getProcessSupervisor as getProcessSupervisorImpl } from "../../process/supervisor/index.js";
 import { applySkillEnvOverridesFromSnapshot } from "../../skills/runtime/env-overrides.js";
 import { appendBootstrapPromptWarning } from "../bootstrap-budget.js";
@@ -480,18 +481,27 @@ export async function executePreparedCliRun(
     context.claudeSkillsPluginArgs ?? fallbackClaudeSkillsPlugin?.args ?? [];
   const baseArgsWithSkills =
     claudeSkillsPluginArgs.length > 0 ? [...resolvedArgs, ...claudeSkillsPluginArgs] : resolvedArgs;
-  const executionBaseArgs =
-    context.backendResolved.resolveExecutionArgs?.({
-      config: params.config,
-      workspaceDir: context.workspaceDir,
-      provider: params.provider,
-      modelId: context.modelId,
-      authProfileId: context.effectiveAuthProfileId,
-      thinkingLevel: params.thinkLevel,
-      executionMode: params.executionMode ?? "agent",
-      useResume,
-      baseArgs: baseArgsWithSkills,
-    }) ?? baseArgsWithSkills;
+  const rawResolvedExecution = context.backendResolved.resolveExecutionArgs?.({
+    config: params.config,
+    workspaceDir: context.workspaceDir,
+    provider: params.provider,
+    modelId: context.modelId,
+    authProfileId: context.effectiveAuthProfileId,
+    thinkingLevel: params.thinkLevel,
+    executionMode: params.executionMode ?? "agent",
+    useResume,
+    baseArgs: baseArgsWithSkills,
+  });
+  // Normalize the legacy argv-only return shape so external CLI backends on the
+  // old `readonly string[]` contract keep working alongside the current
+  // `{ args, env? }` shape. `Array.isArray` cannot narrow the readonly-array
+  // union member, so the non-array case is asserted after excluding the array.
+  const resolvedExecution: CliBackendResolvedExecutionArgs | undefined = !rawResolvedExecution
+    ? undefined
+    : Array.isArray(rawResolvedExecution)
+      ? { args: rawResolvedExecution }
+      : (rawResolvedExecution as CliBackendResolvedExecutionArgs);
+  const executionBaseArgs = resolvedExecution?.args ?? baseArgsWithSkills;
   const args = buildCliArgs({
     backend,
     baseArgs: Array.from(executionBaseArgs),
@@ -681,6 +691,21 @@ export async function executePreparedCliRun(
             );
           }
           Object.assign(next, mcpCaptureAttempt.env);
+
+          // Backend-owned per-call env (e.g. a mapped reasoning-effort level)
+          // applied after backend.env so a request-scoped value wins over a
+          // statically pinned backend env var. The runner stays name-agnostic;
+          // the backend owns the variable names.
+          if (resolvedExecution?.env && Object.keys(resolvedExecution.env).length > 0) {
+            Object.assign(
+              next,
+              sanitizeHostExecEnv({
+                baseEnv: {},
+                overrides: resolvedExecution.env,
+                blockPathOverrides: true,
+              }),
+            );
+          }
 
           // Never mark Claude CLI as host-managed. That marker routes runs into
           // Anthropic's separate host-managed usage tier instead of normal CLI

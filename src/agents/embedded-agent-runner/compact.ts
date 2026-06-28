@@ -665,6 +665,9 @@ async function compactEmbeddedAgentSessionDirectOnce(
       messageProvider: params.messageChannel ?? params.messageProvider,
       diagId,
       extraSystemPrompt: params.extraSystemPrompt,
+      // Optional per-call compaction effort override; unset inherits the
+      // backend default (no --effort), preserving prior behavior.
+      thinkLevel: params.config?.agents?.defaults?.compaction?.effort,
       // Bound the summarize by the configured compaction budget less the margin
       // (see COMPACTION_INNER_TIMEOUT_MARGIN_MS); previously a hard 60s.
       timeoutMs: Math.max(

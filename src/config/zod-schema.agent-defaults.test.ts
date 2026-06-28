@@ -63,6 +63,27 @@ describe("agent defaults schema", () => {
     );
   });
 
+  it("accepts compaction effort overrides and rejects unknown levels", () => {
+    expectSchemaSuccess(
+      AgentDefaultsSchema.safeParse({
+        compaction: {
+          effort: "low",
+          memoryFlush: {
+            effort: "xhigh",
+          },
+        },
+      }),
+    );
+    expectSchemaFailurePath(
+      AgentDefaultsSchema.safeParse({
+        compaction: {
+          effort: "turbo",
+        },
+      }),
+      "compaction.effort",
+    );
+  });
+
   it("accepts videoGenerationModel", () => {
     expectSchemaSuccess(
       AgentDefaultsSchema.safeParse({

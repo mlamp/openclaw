@@ -1499,6 +1499,8 @@ export const FIELD_HELP: Record<string, string> = {
     "Maximum time in seconds allowed for a single compaction operation before it is aborted (default: 180). Increase this for very large sessions that need more time to summarize, or decrease it to fail faster on unresponsive models.",
   "agents.defaults.compaction.model":
     "Optional provider/model override used only for compaction summarization. Set this when you want compaction to run on a different model than the session default, and leave it unset to keep using the primary agent model.",
+  "agents.defaults.compaction.effort":
+    "Optional reasoning-effort override for CLI-backend compaction summary turns. Set low, medium, high, xhigh, or max to force a cheaper or richer effort for that turn, overriding a backend-pinned effort. off and unset inherit the active backend effort (the Claude CLI has no off effort). Accepted: off, minimal, low, medium, high, xhigh, adaptive, max.",
   "agents.defaults.compaction.truncateAfterCompaction":
     "When enabled, rotates the active session JSONL file after compaction so future turns load only the summary and unsummarized tail while the previous full transcript remains archived. Prevents unbounded active transcript growth in long-running sessions. Default: false.",
   "agents.defaults.compaction.maxActiveTranscriptBytes":
@@ -1511,6 +1513,8 @@ export const FIELD_HELP: Record<string, string> = {
     "Enables pre-compaction memory flush before the runtime performs stronger history reduction near token limits. Keep enabled unless you intentionally disable memory side effects in constrained environments.",
   "agents.defaults.compaction.memoryFlush.model":
     "Optional provider/model override used only for pre-compaction memory flush turns. Set this to a local model such as ollama/qwen3:8b when durable memory extraction should avoid the active session's paid model. The override is exact and does not inherit the active model fallback chain.",
+  "agents.defaults.compaction.memoryFlush.effort":
+    "Optional reasoning-effort override for CLI-backend pre-compaction memory-flush turns. Set low, medium, high, xhigh, or max to force an effort for that turn, overriding a backend-pinned effort. off and unset inherit the active backend effort. Accepted: off, minimal, low, medium, high, xhigh, adaptive, max.",
   "agents.defaults.compaction.memoryFlush.softThresholdTokens":
     "Threshold distance to compaction (in tokens) that triggers pre-compaction memory flush execution. Use earlier thresholds for safer persistence, or tighter thresholds for lower flush frequency.",
   "agents.defaults.compaction.memoryFlush.forceFlushTranscriptBytes":

@@ -211,6 +211,12 @@ only for behavior that really belongs to the backend.
 | `bundleMcp` / `bundleMcpMode`      | Opt into OpenClaw's loopback MCP tool bridge                                |
 | `ownsNativeCompaction`             | Backend owns its own compaction - OpenClaw defers                           |
 
+`resolveExecutionArgs(ctx)` returns `{ args, env? }`: `args` is the rewritten
+argv, and the optional `env` is applied after the static backend env so a
+request-scoped value (such as a mapped reasoning-effort level) wins over a
+pinned backend env var. Returning a bare `string[]` is still supported for
+argv-only rewrites.
+
 Keep these hooks provider-owned. Do not add CLI-specific branches to core when a
 backend hook can express the behavior.
 

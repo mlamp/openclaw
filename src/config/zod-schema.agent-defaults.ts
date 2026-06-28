@@ -33,6 +33,17 @@ const OptionalBootstrapFileNameSchema = z.enum([
   "IDENTITY.md",
 ]);
 
+const ThinkingLevelSchema = z.union([
+  z.literal("off"),
+  z.literal("minimal"),
+  z.literal("low"),
+  z.literal("medium"),
+  z.literal("high"),
+  z.literal("xhigh"),
+  z.literal("adaptive"),
+  z.literal("max"),
+]);
+
 const EmbeddedAgentConfigSchema = z
   .object({
     projectSettingsPolicy: z
@@ -185,11 +196,13 @@ export const AgentDefaultsSchema = z
         postIndexSync: z.enum(["off", "async", "await"]).optional(),
         postCompactionSections: z.array(z.string()).optional(),
         model: z.string().optional(),
+        effort: ThinkingLevelSchema.optional(),
         timeoutSeconds: z.number().int().positive().optional(),
         memoryFlush: z
           .object({
             enabled: z.boolean().optional(),
             model: z.string().optional(),
+            effort: ThinkingLevelSchema.optional(),
             softThresholdTokens: z.number().int().nonnegative().optional(),
             forceFlushTranscriptBytes: NonNegativeByteSizeSchema.optional(),
             prompt: z.string().optional(),
@@ -205,18 +218,7 @@ export const AgentDefaultsSchema = z
       .optional(),
     runRetries: AgentRunRetriesConfigSchema.optional(),
     embeddedAgent: EmbeddedAgentConfigSchema.optional(),
-    thinkingDefault: z
-      .union([
-        z.literal("off"),
-        z.literal("minimal"),
-        z.literal("low"),
-        z.literal("medium"),
-        z.literal("high"),
-        z.literal("xhigh"),
-        z.literal("adaptive"),
-        z.literal("max"),
-      ])
-      .optional(),
+    thinkingDefault: ThinkingLevelSchema.optional(),
     verboseDefault: z.union([z.literal("off"), z.literal("on"), z.literal("full")]).optional(),
     toolProgressDetail: z.union([z.literal("explain"), z.literal("raw")]).optional(),
     reasoningDefault: z.union([z.literal("off"), z.literal("on"), z.literal("stream")]).optional(),

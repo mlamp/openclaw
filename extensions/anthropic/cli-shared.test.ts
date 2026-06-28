@@ -102,10 +102,10 @@ describe("resolveClaudeCliExecutionArgs", () => {
         useResume: false,
         baseArgs: ["-p", "--output-format", "stream-json"],
       }),
-    ).toEqual(["-p", "--output-format", "stream-json"]);
+    ).toEqual({ args: ["-p", "--output-format", "stream-json"] });
   });
 
-  it("maps OpenClaw thinking levels to Claude effort args", () => {
+  it("maps OpenClaw thinking levels to Claude effort args plus the effort env", () => {
     expect(
       resolveClaudeCliExecutionArgs({
         workspaceDir: "/tmp",
@@ -115,7 +115,7 @@ describe("resolveClaudeCliExecutionArgs", () => {
         useResume: false,
         baseArgs: ["-p"],
       }),
-    ).toEqual(["-p", "--effort", "low"]);
+    ).toEqual({ args: ["-p", "--effort", "low"], env: { CLAUDE_CODE_EFFORT_LEVEL: "low" } });
     expect(
       resolveClaudeCliExecutionArgs({
         workspaceDir: "/tmp",
@@ -125,7 +125,7 @@ describe("resolveClaudeCliExecutionArgs", () => {
         useResume: false,
         baseArgs: ["-p"],
       }),
-    ).toEqual(["-p", "--effort", "medium"]);
+    ).toEqual({ args: ["-p", "--effort", "medium"], env: { CLAUDE_CODE_EFFORT_LEVEL: "medium" } });
     expect(
       resolveClaudeCliExecutionArgs({
         workspaceDir: "/tmp",
@@ -135,7 +135,10 @@ describe("resolveClaudeCliExecutionArgs", () => {
         useResume: true,
         baseArgs: ["-p", "--resume", "{sessionId}"],
       }),
-    ).toEqual(["-p", "--resume", "{sessionId}", "--effort", "xhigh"]);
+    ).toEqual({
+      args: ["-p", "--resume", "{sessionId}", "--effort", "xhigh"],
+      env: { CLAUDE_CODE_EFFORT_LEVEL: "xhigh" },
+    });
   });
 
   it("replaces static effort args when a session thinking level is active", () => {
@@ -148,7 +151,7 @@ describe("resolveClaudeCliExecutionArgs", () => {
         useResume: false,
         baseArgs: ["-p", "--effort", "low", "--effort=high"],
       }),
-    ).toEqual(["-p", "--effort", "max"]);
+    ).toEqual({ args: ["-p", "--effort", "max"], env: { CLAUDE_CODE_EFFORT_LEVEL: "max" } });
   });
 
   it("forces isolated no-tool one-shot args for side-question execution", () => {
@@ -188,22 +191,24 @@ describe("resolveClaudeCliExecutionArgs", () => {
           "high",
         ],
       }),
-    ).toEqual([
-      "-p",
-      "--output-format",
-      "stream-json",
-      "--safe-mode",
-      "--tools",
-      "",
-      "--disallowedTools",
-      "mcp__*",
-      "--strict-mcp-config",
-      "--no-session-persistence",
-      "--max-turns",
-      "1",
-      "--permission-mode",
-      "default",
-    ]);
+    ).toEqual({
+      args: [
+        "-p",
+        "--output-format",
+        "stream-json",
+        "--safe-mode",
+        "--tools",
+        "",
+        "--disallowedTools",
+        "mcp__*",
+        "--strict-mcp-config",
+        "--no-session-persistence",
+        "--max-turns",
+        "1",
+        "--permission-mode",
+        "default",
+      ],
+    });
   });
 });
 

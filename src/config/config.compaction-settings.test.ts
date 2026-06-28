@@ -23,6 +23,7 @@ describe("config compaction settings", () => {
       reserveTokensFloor: 12_345,
       identifierPolicy: "custom",
       identifierInstructions: "Keep ticket IDs unchanged.",
+      effort: "low",
       qualityGuard: {
         enabled: true,
         maxRetries: 2,
@@ -33,6 +34,7 @@ describe("config compaction settings", () => {
       memoryFlush: {
         enabled: false,
         model: "ollama/qwen3:8b",
+        effort: "minimal",
         softThresholdTokens: 1234,
         prompt: "Write notes.",
         systemPrompt: "Flush memory now.",
@@ -49,8 +51,10 @@ describe("config compaction settings", () => {
     expect(compaction?.qualityGuard?.enabled).toBe(true);
     expect(compaction?.qualityGuard?.maxRetries).toBe(2);
     expect(compaction?.midTurnPrecheck?.enabled).toBe(true);
+    expect(compaction?.effort).toBe("low");
     expect(compaction?.memoryFlush?.enabled).toBe(false);
     expect(compaction?.memoryFlush?.model).toBe("ollama/qwen3:8b");
+    expect(compaction?.memoryFlush?.effort).toBe("minimal");
     expect(compaction?.memoryFlush?.softThresholdTokens).toBe(1234);
     expect(compaction?.memoryFlush?.prompt).toBe("Write notes.");
     expect(compaction?.memoryFlush?.systemPrompt).toBe("Flush memory now.");

@@ -12,6 +12,7 @@ export type {
   CliBackendPrepareExecutionContext,
   CliBackendResolveExecutionArgs,
   CliBackendResolveExecutionArgsContext,
+  CliBackendResolvedExecutionArgs,
   CliBackendSideQuestionToolMode,
   CliBackendThinkingLevel,
 } from "../plugins/types.js";

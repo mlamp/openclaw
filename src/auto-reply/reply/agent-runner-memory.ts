@@ -1327,6 +1327,9 @@ export async function runMemoryFlushIfNeeded(params: {
             flushSystemPrompt,
             memoryFlushWritePath,
             agentId: params.followupRun.run.agentId,
+            // Optional per-call memory-flush effort override; unset inherits the
+            // backend default (no --effort), preserving prior behavior.
+            thinkLevel: params.cfg?.agents?.defaults?.compaction?.memoryFlush?.effort,
             // Reuse the compaction budget (default 180s) so a slow-model flush is
             // not killed by the one-shot's hard 60s fallback. No outer safety
             // wrapper bounds flush, so the inner one-shot needs no margin.

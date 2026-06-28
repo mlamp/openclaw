@@ -5,6 +5,7 @@
 import type {
   CliBackendConfig,
   CliBackendNormalizeConfigContext,
+  CliBackendResolvedExecutionArgs,
   CliBackendResolveExecutionArgsContext,
 } from "openclaw/plugin-sdk/cli-backend";
 import { normalizeOptionalLowercaseString } from "openclaw/plugin-sdk/string-coerce-runtime";
@@ -67,6 +68,9 @@ const CLAUDE_LEGACY_SKIP_PERMISSIONS_ARG = "--dangerously-skip-permissions";
 const CLAUDE_PERMISSION_MODE_ARG = "--permission-mode";
 const CLAUDE_SETTING_SOURCES_ARG = "--setting-sources";
 const CLAUDE_EFFORT_ARG = "--effort";
+// Claude Code reads effort from this env var with precedence over --effort, so
+// it lives here in the backend that owns the Claude CLI dialect.
+const CLAUDE_EFFORT_ENV = "CLAUDE_CODE_EFFORT_LEVEL";
 const CLAUDE_BARE_ARG = "--bare";
 const CLAUDE_SAFE_MODE_ARG = "--safe-mode";
 const CLAUDE_TOOLS_ARG = "--tools";
@@ -329,15 +333,22 @@ function resolveClaudeCliSideQuestionExecutionArgs(baseArgs: readonly string[]):
 /** Resolve final Claude CLI execution args for one backend invocation. */
 export function resolveClaudeCliExecutionArgs(
   context: CliBackendResolveExecutionArgsContext,
-): string[] {
+): CliBackendResolvedExecutionArgs {
   if (context.executionMode === "side-question") {
-    return resolveClaudeCliSideQuestionExecutionArgs(context.baseArgs);
+    return { args: resolveClaudeCliSideQuestionExecutionArgs(context.baseArgs) };
   }
   const effort = mapClaudeCliThinkingLevelToEffort(context.thinkingLevel);
   if (!effort) {
-    return [...context.baseArgs];
+    return { args: [...context.baseArgs] };
   }
-  return [...stripClaudeEffortArgs(context.baseArgs), CLAUDE_EFFORT_ARG, effort];
+  // Emit the effort env alongside --effort. Claude Code honors
+  // CLAUDE_CODE_EFFORT_LEVEL over the flag, so when an operator pins the env on
+  // the backend the flag is otherwise inert; the runner applies this env after
+  // the static backend env, so the per-call effort wins.
+  return {
+    args: [...stripClaudeEffortArgs(context.baseArgs), CLAUDE_EFFORT_ARG, effort],
+    env: { [CLAUDE_EFFORT_ENV]: effort },
+  };
 }
 
 /** Normalize Claude CLI backend config before registration or execution. */
