@@ -115,6 +115,9 @@ describe("runCliSummarizerOneShot", () => {
     expect(callArgs.provider).toBe("claude-cli");
     expect(callArgs.cliSessionBinding).toBeUndefined();
     expect(callArgs.cliSessionId).toBeUndefined();
+    // No explicit timeout -> the conservative one-shot default (unchanged by the
+    // compaction-timeout fix, which threads a timeout at the caller instead).
+    expect(callArgs.timeoutMs).toBe(60_000);
     const tempDirsAfter = (await fs.readdir(os.tmpdir())).filter((f) =>
       f.startsWith("openclaw-cli-summarize-"),
     );
@@ -405,6 +408,9 @@ describe("generateCliConversationLabel", () => {
       maxLength: 10,
     });
     expect(label).toBe("a label th");
+    // The label path stays fast (15s) and is unaffected by the compaction-timeout fix.
+    const callArgs = runCliAgentMock.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(callArgs.timeoutMs).toBe(15_000);
   });
 
   it("returns null on empty CLI response", async () => {

@@ -72,6 +72,7 @@ import {
   resolveChannelReactionGuidance,
 } from "../channel-tools.js";
 import { compactViaCliBackend } from "../cli-summarizer.js";
+import { CLI_WATCHDOG_MIN_TIMEOUT_MS } from "../cli-watchdog-defaults.js";
 import {
   hasMeaningfulConversationContent,
   isRealConversationMessage,
@@ -185,6 +186,15 @@ import type { EmbeddedAgentCompactResult } from "./types.js";
 import { mapThinkingLevel, normalizeContextTokenBudget } from "./utils.js";
 import { flushPendingToolResultsAfterIdle } from "./wait-for-idle-before-flush.js";
 export type { CompactEmbeddedAgentSessionParams } from "./compact.types.js";
+
+// Hold the inner CLI one-shot below the outer compaction safety timeout
+// (compact.queued.ts) so its structured FailoverError (cli_no_output_timeout /
+// cli_overall_timeout) usually surfaces ahead of the generic outer "Compaction
+// timed out": the inner error is thrown only after the killed process exits, up
+// to GRACEFUL_CANCEL_TIMEOUT_MS (supervisor.ts, 5s) past the deadline. Best
+// effort — a slow before_compaction hook can still let the outer fire first,
+// which the compact.queued catch logs all the same.
+const COMPACTION_INNER_TIMEOUT_MARGIN_MS = 12_000;
 
 function hasRealConversationContent(
   msg: AgentMessage,
@@ -655,6 +665,12 @@ async function compactEmbeddedAgentSessionDirectOnce(
       messageProvider: params.messageChannel ?? params.messageProvider,
       diagId,
       extraSystemPrompt: params.extraSystemPrompt,
+      // Bound the summarize by the configured compaction budget less the margin
+      // (see COMPACTION_INNER_TIMEOUT_MARGIN_MS); previously a hard 60s.
+      timeoutMs: Math.max(
+        CLI_WATCHDOG_MIN_TIMEOUT_MS,
+        resolveCompactionTimeoutMs(params.config) - COMPACTION_INNER_TIMEOUT_MARGIN_MS,
+      ),
     });
   }
   await ensureOpenClawModelsJson(params.config, agentDir, {

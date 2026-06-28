@@ -916,7 +916,47 @@ describe("runMemoryFlushIfNeeded", () => {
     // A CLI provider routes OpenClaw memory flush through the CLI summarizer,
     // not the embedded SDK path.
     expect(runCliMemoryFlushMock).toHaveBeenCalledTimes(1);
+    // The flush one-shot is bounded by the compaction budget (default 180s), not
+    // the one-shot's hard 60s fallback.
+    expect(runCliMemoryFlushMock).toHaveBeenCalledWith(
+      expect.objectContaining({ timeoutMs: 180_000 }),
+    );
     expect(runEmbeddedAgentMock).not.toHaveBeenCalled();
+  });
+
+  it("bounds the CLI memory flush by the configured compaction timeout", async () => {
+    const sessionEntry: SessionEntry = {
+      sessionId: "session",
+      updatedAt: Date.now(),
+      totalTokens: 80_000,
+      compactionCount: 1,
+    };
+
+    await runMemoryFlushIfNeeded({
+      cfg: {
+        agents: {
+          defaults: {
+            cliBackends: { "codex-cli": { command: "codex" } },
+            compaction: { timeoutSeconds: 123 },
+          },
+        },
+      },
+      followupRun: createTestFollowupRun({ provider: "codex-cli" }),
+      sessionCtx: { Provider: "whatsapp" } as unknown as TemplateContext,
+      defaultModel: "codex-cli/gpt-5.5",
+      agentCfgContextTokens: 100_000,
+      resolvedVerboseLevel: "off",
+      sessionEntry,
+      sessionStore: { main: sessionEntry },
+      sessionKey: "main",
+      isHeartbeat: false,
+      replyOperation: createReplyOperation(),
+    });
+
+    // compaction.timeoutSeconds is read end-to-end into the flush one-shot.
+    expect(runCliMemoryFlushMock).toHaveBeenCalledWith(
+      expect.objectContaining({ timeoutMs: 123_000 }),
+    );
   });
 
   it("routes memory flush through the CLI summarizer for CLI session runtime pins", async () => {

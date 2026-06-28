@@ -224,7 +224,14 @@ describe("compactEmbeddedAgentSessionDirect CLI runtime routing", () => {
 
     expect(compactViaCliBackendMock).toHaveBeenCalledTimes(1);
     expect(compactViaCliBackendMock).toHaveBeenCalledWith(
-      expect.objectContaining({ provider: "test-cli", model: "claude-opus-4-7" }),
+      // timeoutMs threads the compaction budget into the one-shot (no longer a
+      // hard 60s). Harness resolveCompactionTimeoutMs mock = 30_000, minus the
+      // 12_000 inner-vs-outer margin = 18_000.
+      expect.objectContaining({
+        provider: "test-cli",
+        model: "claude-opus-4-7",
+        timeoutMs: 18_000,
+      }),
     );
     // The direct SDK/embedded compaction path must not run for a CLI-backed agent.
     expect(resolveModelMock).not.toHaveBeenCalled();

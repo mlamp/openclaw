@@ -10,6 +10,7 @@ import { resolveBootstrapWarningSignaturesSeen } from "../../agents/bootstrap-bu
 import { runCliMemoryFlush } from "../../agents/cli-summarizer.js";
 import { estimateMessagesTokens } from "../../agents/compaction.js";
 import { classifyCompactionReason } from "../../agents/embedded-agent-runner/compact-reasons.js";
+import { resolveCompactionTimeoutMs } from "../../agents/embedded-agent-runner/compaction-safety-timeout.js";
 import { resolveAgentHarnessPolicy } from "../../agents/harness/policy.js";
 import { ensureSelectedAgentHarnessPlugin } from "../../agents/harness/runtime-plugin.js";
 import { runWithModelFallback } from "../../agents/model-fallback.js";
@@ -1326,6 +1327,10 @@ export async function runMemoryFlushIfNeeded(params: {
             flushSystemPrompt,
             memoryFlushWritePath,
             agentId: params.followupRun.run.agentId,
+            // Reuse the compaction budget (default 180s) so a slow-model flush is
+            // not killed by the one-shot's hard 60s fallback. No outer safety
+            // wrapper bounds flush, so the inner one-shot needs no margin.
+            timeoutMs: resolveCompactionTimeoutMs(params.cfg),
           });
           memoryCompactionCompleted = true;
           if (result.meta?.agentMeta?.sessionId) {
