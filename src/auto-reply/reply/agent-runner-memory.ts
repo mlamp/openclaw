@@ -11,7 +11,10 @@ import { prepareSystemAgentRunAdmission } from "../../agents/admitted-run-contex
 import { resolveEffectiveCompactionReserveTokens } from "../../agents/agent-compaction-constants.js";
 import { resolveDefaultAgentId } from "../../agents/agent-scope-config.js";
 import { resolveBootstrapWarningSignaturesSeen } from "../../agents/bootstrap-budget.js";
-import { resolveCliBackendConfig } from "../../agents/cli-backends.js";
+import {
+  resolveCliBackendConfig,
+  resolveCliRuntimeCanonicalProvider,
+} from "../../agents/cli-backends.js";
 import { estimateMessagesTokens } from "../../agents/compaction.js";
 import { isBenignCompactionSkipResult } from "../../agents/embedded-agent-runner/compact-reasons.js";
 import { resolveCompactionTimeoutMs } from "../../agents/embedded-agent-runner/compaction-safety-timeout.js";
@@ -1557,6 +1560,28 @@ export async function runMemoryFlushIfNeeded(params: {
         if (!completion) {
           throw new Error("CLI memory flush model selection unavailable");
         }
+        const completionProvider =
+          resolveCliRuntimeCanonicalProvider({
+            runtime: completion.provider,
+            config: params.cfg,
+          }) ?? completion.provider;
+        const activeProvider =
+          resolveCliRuntimeCanonicalProvider({
+            runtime: params.followupRun.run.provider,
+            config: params.cfg,
+          }) ?? params.followupRun.run.provider;
+        // Only an explicit maintenance model @profile may replace the active pin.
+        // Compare canonical owners so a CLI alias cannot lose its subscription account.
+        const authProfileId =
+          completion.profileId ??
+          (completionProvider === activeProvider
+            ? params.followupRun.run.authProfileId
+            : undefined);
+        const flushContextWindowTokens = resolveMemoryFlushContextWindowTokens({
+          cfg: params.cfg,
+          provider: completionProvider,
+          modelId: completion.modelId,
+        });
         deferredLifecycle.handoffToCli();
         await runCliMemoryFlush({
           config: params.cfg,
@@ -1566,11 +1591,8 @@ export async function runMemoryFlushIfNeeded(params: {
           workspaceDir: params.followupRun.run.workspaceDir,
           provider: completion.runtimeProvider ?? completion.provider,
           model: completion.modelId,
-          authProfileId:
-            completion.profileId ??
-            (completion.provider === params.followupRun.run.provider
-              ? params.followupRun.run.authProfileId
-              : undefined),
+          contextWindowTokens: flushContextWindowTokens,
+          authProfileId,
           agentHarnessRuntimeOverride: resolveCompatibleAgentRuntimeForProvider({
             provider: completion.provider,
             runtime: runtimeId,

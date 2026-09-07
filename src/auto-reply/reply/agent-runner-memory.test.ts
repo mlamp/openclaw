@@ -168,7 +168,18 @@ function registerMemoryFlushPlanResolverForTest(resolver: MemoryFlushPlanResolve
   registerMemoryCapability("memory-core", { flushPlanResolver: resolver });
 }
 
-function registerClaudeCliBackend(ownsNativeCompaction = false, manualCompaction = false): void {
+function registerClaudeCliBackend(mode: "none" | "native" | "manual" = "none"): void {
+  const compaction =
+    mode === "manual"
+      ? {
+          ownsNativeCompaction: true as const,
+          manualCompaction: {
+            buildPrompt: () => "/compact",
+            input: "arg" as const,
+            validateOutput: () => ({ ok: true as const }),
+          },
+        }
+      : { ownsNativeCompaction: mode === "native" };
   cliBackendsTesting.setDepsForTest({
     resolveRuntimeCliBackends: () => [
       {
@@ -176,16 +187,7 @@ function registerClaudeCliBackend(ownsNativeCompaction = false, manualCompaction
         modelProvider: "anthropic",
         pluginId: "anthropic",
         config: { command: "claude" },
-        ownsNativeCompaction,
-        ...(manualCompaction
-          ? {
-              manualCompaction: {
-                buildPrompt: () => "/compact",
-                input: "arg" as const,
-                validateOutput: () => ({ ok: true as const }),
-              },
-            }
-          : {}),
+        ...compaction,
       },
     ],
   });
@@ -1663,18 +1665,28 @@ describe("runMemoryFlushIfNeeded", () => {
     ).toBeUndefined();
   });
 
-  it.each(["provider", "config", "session"] as const)(
-    "exports CLI memory selected by %s without API dispatch or session rotation",
-    async (selection) => {
-      registerClaudeCliBackend(true);
+  it.each([
+    ["provider", undefined, "anthropic:active"],
+    ["config", undefined, "anthropic:active"],
+    ["session", undefined, "anthropic:active"],
+    ["provider", "anthropic/claude-sonnet-4-6", "anthropic:active"],
+    ["provider", "anthropic/claude-sonnet-4-6@anthropic:maintenance", "anthropic:maintenance"],
+    ["provider", "openai/gpt-5.4", undefined],
+  ] as const)(
+    "exports CLI memory selected by %s with model %s without changing its credential owner",
+    async (selection, model, expectedProfile) => {
+      registerClaudeCliBackend("native");
+      if (model) {
+        registerMemoryFlushPlanResolverForTest(() => createModifiedMemoryFlushPlan({ model }));
+      }
       const sessionKey = "agent:main:main";
       const storePath = path.join(rootDir, "sessions.json");
       const scope = { agentId: "main", sessionId: "session", sessionKey, storePath };
       await upsertSessionEntryCore(
         scope,
-        createFlushSessionEntry({
-          ...(selection === "session" ? { agentRuntimeOverride: "claude-cli" } : {}),
-        }),
+        createFlushSessionEntry(
+          selection === "session" ? { agentRuntimeOverride: "claude-cli" } : {},
+        ),
       );
       await appendTranscriptMessage(scope, {
         cwd: rootDir,
@@ -1699,6 +1711,7 @@ describe("runMemoryFlushIfNeeded", () => {
           model: "claude-opus-4-6",
           sessionKey,
           workspaceDir: rootDir,
+          authProfileId: "anthropic:active",
         }),
         sessionKey,
         storePath,
@@ -1717,6 +1730,7 @@ describe("runMemoryFlushIfNeeded", () => {
           prompt: expect.stringContaining("Remember the project uses Rust."),
           timeoutMs: 240_000,
           thinkLevel: "low",
+          authProfileId: expectedProfile,
         }),
       );
       expect(runEmbeddedAgentEntryMock).not.toHaveBeenCalled();
@@ -3836,7 +3850,7 @@ describe("runMemoryFlushIfNeeded", () => {
   });
 
   it("compacts native CLI pressure once, preserves its binding, and waits for fresh native usage", async () => {
-    registerClaudeCliBackend(true, true);
+    registerClaudeCliBackend("manual");
     const sessionKey = "agent:main:main";
     const storePath = path.join(rootDir, "native-preflight.json");
     const sessionEntry = createFlushSessionEntry({
@@ -3894,8 +3908,8 @@ describe("runMemoryFlushIfNeeded", () => {
     expect(runWithModelFallbackMock).not.toHaveBeenCalled();
   });
 
-  it("keeps ownsNativeCompaction absolute over the SQLite transcript byte guard", async () => {
-    registerClaudeCliBackend(true);
+  it("does not trigger native compaction from the mirrored SQLite byte count", async () => {
+    registerClaudeCliBackend("native");
     registerMemoryFlushPlanResolverForTest(() => ({
       softThresholdTokens: 4_000,
       forceFlushTranscriptBytes: 10,
@@ -3941,20 +3955,6 @@ describe("runMemoryFlushIfNeeded", () => {
       sessionKey,
     });
 
-    const flushResult = await runMemoryFlushIfNeeded({
-      cfg,
-      followupRun,
-      sessionCtx: createTestTemplateContext({ Provider: "whatsapp" }),
-      defaultModel: "anthropic/claude-opus-4-6",
-      modelContextTokens: 100_000,
-      resolvedVerboseLevel: "off",
-      sessionEntry,
-      sessionStore: { [sessionKey]: sessionEntry },
-      sessionKey,
-      storePath,
-      isHeartbeat: false,
-      replyOperation: createReplyOperation(),
-    });
     const preflightEntry = await runSessionCompactionIfNeeded({
       cfg,
       followupRun,
@@ -3968,7 +3968,6 @@ describe("runMemoryFlushIfNeeded", () => {
       ...createCompactionLifecycle(createReplyOperation()),
     });
 
-    expect(flushResult).toEqual({ sessionEntry, outcome: "skipped" });
     expect(preflightEntry).toBe(sessionEntry);
     expect(preflightEntry?.compactionCount).toBe(0);
     expect(runEmbeddedAgentMock).not.toHaveBeenCalled();

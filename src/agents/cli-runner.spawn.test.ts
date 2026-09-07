@@ -338,7 +338,11 @@ describe("runCliAgent spawn path", () => {
     );
   });
 
-  it.each([
+  it.each<{
+    selection: string;
+    preparedEnv: Record<string, string> | undefined;
+    expectedEnv: Record<string, string> | undefined;
+  }>([
     {
       selection: "200k",
       preparedEnv: { CLAUDE_CODE_DISABLE_1M_CONTEXT: "1" },

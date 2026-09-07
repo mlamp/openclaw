@@ -154,7 +154,7 @@ describe("heartbeat event classification", () => {
     { value: "NO_REPLY", expected: false },
     { value: "no_reply: actual reminder", expected: true },
     { value: "PULSE_ACK", expected: false },
-    { value: "heartbeat_ok: already handled", expected: false },
+    { value: "pulse_ack: already handled", expected: false },
     { value: "heartbeat poll: noop", expected: false },
     { value: "heartbeat wake: noop", expected: false },
     { value: "exec finished: ok", expected: false },

@@ -1,11 +1,42 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { runSkillHistoryScanReview } from "./history-scan-review.js";
+
+const resolveCliRuntimeExecutionProvider = vi.hoisted(() =>
+  vi.fn(() => undefined as string | undefined),
+);
+vi.mock("../../agents/model-runtime-aliases.js", () => ({ resolveCliRuntimeExecutionProvider }));
 
 const runEmbeddedAgent = vi.hoisted(() => vi.fn(async () => ({ meta: { durationMs: 1 } })));
 
 vi.mock("../../agents/embedded-agent.js", () => ({ runEmbeddedAgent }));
 
 describe("Skill Workshop history scan review", () => {
+  beforeEach(() => {
+    runEmbeddedAgent.mockClear();
+    resolveCliRuntimeExecutionProvider.mockReset();
+  });
+
+  it("reports unsupported CLI reviews without executing the provider API", async () => {
+    resolveCliRuntimeExecutionProvider.mockReturnValueOnce("claude-cli");
+    await expect(
+      runSkillHistoryScanReview({
+        agentId: "main",
+        config: {},
+        modelRef: { provider: "anthropic", model: "claude-sonnet-4-6" },
+        sessions: [
+          {
+            instanceId: "session-1",
+            sessionKey: "agent:main:main",
+            updatedAt: "2026-08-18T00:00:00.000Z",
+            modelIterations: 6,
+            transcript: "[user]\nRepair it.\n\n[assistant]\nDone.",
+          },
+        ],
+        workspaceDir: "/tmp/openclaw-history-scan-review",
+      }),
+    ).rejects.toThrow("Skill Workshop reviews are unavailable with the selected CLI runtime");
+    expect(runEmbeddedAgent).not.toHaveBeenCalled();
+  });
   it("locks the model that sized the history projection", async () => {
     await runSkillHistoryScanReview({
       agentId: "main",

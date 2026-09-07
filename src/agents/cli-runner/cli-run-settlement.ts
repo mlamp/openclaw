@@ -286,11 +286,8 @@ export function resolveCliSourceReplyMirror(params: {
   return { payloads, delivered, visibleText };
 }
 
-function hasMissingCliTranscript(context: PreparedCliRunContext): boolean {
-  return (
-    context.reusableCliSession.mode === "invalidate" &&
-    context.reusableCliSession.invalidatedReason === "missing-transcript"
-  );
+function hasMissingCliTranscript({ reusableCliSession: session }: PreparedCliRunContext) {
+  return session.mode === "invalidate" && session.invalidatedReason === "missing-transcript";
 }
 
 export function buildBlockedCliRunResult(params: {

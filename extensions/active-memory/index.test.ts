@@ -899,14 +899,14 @@ describe("active-memory plugin", () => {
         authProfileId: provider === "anthropic" ? "anthropic:chosen" : undefined,
       });
       expect(resolveCliBackendDispatchEligibility).toHaveBeenCalledWith(
-        expect.objectContaining({
-          ...(provider === "anthropic"
+        expect.objectContaining(
+          provider === "anthropic"
             ? {
                 agentHarnessRuntimeOverride: "claude-cli",
                 authProfileId: "anthropic:chosen",
               }
-            : { provider: "openai" }),
-        }),
+            : { provider: "openai" },
+        ),
       );
     },
   );

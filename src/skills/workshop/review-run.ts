@@ -1,5 +1,7 @@
 import { prepareSystemAgentRunAdmission } from "../../agents/admitted-run-context.js";
 import type { RunEmbeddedAgentParams } from "../../agents/embedded-agent-runner/run/params.js";
+import { resolveCliRuntimeExecutionProvider } from "../../agents/model-runtime-aliases.js";
+import { isCliProvider } from "../../agents/model-selection.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { createBackgroundWorkOwner } from "../../process/background-work.js";
 import { getGatewayRestartDrainSignal } from "../../process/gateway-work-admission.js";
@@ -14,6 +16,21 @@ export async function runSkillWorkshopReview(
     reviewKind: "experience" | "history-scan" | "collection-review";
   },
 ) {
+  const provider = params.provider ?? "";
+  const cliRuntime = resolveCliRuntimeExecutionProvider({
+    cfg: params.config,
+    agentId: params.agentId,
+    provider,
+    modelId: params.model,
+    authProfileId: params.authProfileId,
+  });
+  // The CLI bridge cannot carry the review's proposal/reconciliation authority.
+  // Refuse before admission rather than silently billing the direct provider API.
+  if (cliRuntime || isCliProvider(provider, params.config)) {
+    throw new Error(
+      "Skill Workshop reviews are unavailable with the selected CLI runtime. Use an explicitly configured API runtime for reviews, or leave the review pending.",
+    );
+  }
   const { reviewKind, ...runParams } = params;
   const restartSignal = getGatewayRestartDrainSignal();
   const abortSignal = params.abortSignal

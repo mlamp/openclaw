@@ -1000,7 +1000,7 @@ function isHeartbeatRuntimeUserText(text: string) {
   if (normalized === HEARTBEAT_TRANSCRIPT_PROMPT.toLowerCase()) {
     return true;
   }
-  if (normalized.startsWith("read heartbeat.md") && normalized.includes("heartbeat_ok")) {
+  if (normalized.startsWith("read heartbeat.md") && normalized.includes("pulse_ack")) {
     return true;
   }
   if (
@@ -1011,7 +1011,7 @@ function isHeartbeatRuntimeUserText(text: string) {
   }
   return (
     normalized.startsWith(HEARTBEAT_TASK_PROMPT_PREFIX.toLowerCase()) &&
-    (normalized.includes("heartbeat_ok") || normalized.includes(HEARTBEAT_RESPONSE_TOOL_NAME))
+    (normalized.includes("pulse_ack") || normalized.includes(HEARTBEAT_RESPONSE_TOOL_NAME))
   );
 }
 

@@ -753,7 +753,7 @@ describe("isCronSystemEvent", () => {
     "   ",
     "PULSE_ACK",
     "PULSE_ACK 🦞",
-    "heartbeat_ok",
+    "pulse_ack",
     "PULSE_ACK:",
     "PULSE_ACK, continue",
     "heartbeat poll: pending",

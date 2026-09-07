@@ -3,6 +3,7 @@ import { truncateUtf16Safe } from "@openclaw/normalization-core/utf16-slice";
 import type { SessionCompanionExchange } from "../../packages/gateway-protocol/src/schema/sessions.js";
 import { prepareSystemAgentRunAdmission } from "../agents/admitted-run-context.js";
 import { resolveAgentWorkspaceDir } from "../agents/agent-scope.js";
+import { resolveEmbeddedCliBackendDispatchEligibility } from "../agents/embedded-agent-runner/cli-backend-dispatch-eligibility.js";
 import { resolveSimpleCompletionSelectionForAgent } from "../agents/simple-completion-runtime.js";
 import { resolveUtilityModelRefForAgent } from "../agents/utility-model.js";
 import { resolveSessionStorePathCore } from "../config/sessions.js";
@@ -156,6 +157,17 @@ async function defaultRun(params: SessionCompanionRunParams): Promise<string> {
   if (!selection) {
     throw new Error("No utility model is configured for this session.");
   }
+  const provider = selection.runtimeProvider ?? selection.provider;
+  const cliDispatch = resolveEmbeddedCliBackendDispatchEligibility({
+    provider,
+    model: selection.modelId,
+    agentId: params.agentId,
+    agentDir: selection.agentDir,
+    authProfileId: selection.profileId,
+    agentHarnessRuntimeOverride: selection.runtimeProvider,
+    config: params.cfg,
+    workspaceDir: params.workspaceDir,
+  });
   const current = params.messages.at(-1);
   if (!current || current.role !== "user") {
     throw new Error("Session companion has no current question.");
@@ -200,10 +212,11 @@ async function defaultRun(params: SessionCompanionRunParams): Promise<string> {
       config: buildSessionCompanionRunConfig(params.cfg),
       codeModeOverride: false,
       prompt: current.content,
-      provider: selection.runtimeProvider ?? selection.provider,
+      provider,
       model: selection.modelId,
+      agentDir: selection.agentDir,
       modelFallbacksOverride: [],
-      agentHarnessRuntimeOverride: "openclaw",
+      agentHarnessRuntimeOverride: cliDispatch?.provider ?? "openclaw",
       authProfileId: selection.profileId,
       authProfileIdSource: selection.profileId ? "user" : undefined,
       timeoutMs: ASK_TIMEOUT_MS,
@@ -219,6 +232,9 @@ async function defaultRun(params: SessionCompanionRunParams): Promise<string> {
       suppressLiveStreamOutput: true,
       cleanupBundleMcpOnRunEnd: true,
       oneShotCliRun: true,
+      // Subscription-backed utility work must use the same CLI billing route
+      // as foreground turns, with only the companion's read-only tools.
+      cliBackendDispatch: "subscription-auth",
       inputProvenance: { kind: "internal_system", sourceTool: "session-companion" },
     });
     return (

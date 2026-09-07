@@ -95,7 +95,7 @@ const CONTEXT_FILE_ORDER = new Map<string, number>([
 ]);
 
 const DEFAULT_HEARTBEAT_PROMPT_CONTEXT_BLOCK =
-  /Default heartbeat prompt:\r?\n`(?:Read HEARTBEAT\.md if it exists|Follow the heartbeat monitor scratch context when provided\.)[^`\r\n]*PULSE_ACK\.`/gu;
+  /Default heartbeat prompt:\r?\n`(?:Read HEARTBEAT\.md if it exists|Follow the heartbeat monitor scratch context when provided\.)[^`\r\n]*(?:PULSE_ACK|NO_REPLY)\.`/gu;
 const SYSTEM_PROMPT_STABLE_PREFIX_CACHE_LIMIT = 64;
 
 type StablePromptPrefixCacheEntry = {
@@ -837,9 +837,7 @@ export function buildAgentSystemPrompt(params: {
   const runtimeInfo = params.runtimeInfo;
   const modelIdentityLine = buildModelIdentityPromptLine(runtimeInfo?.model);
   if (promptMode === "none") {
-    return ["You are a personal assistant.", modelIdentityLine]
-      .filter(Boolean)
-      .join("\n");
+    return ["You are a personal assistant.", modelIdentityLine].filter(Boolean).join("\n");
   }
 
   const acpEnabled = params.acpEnabled === true;

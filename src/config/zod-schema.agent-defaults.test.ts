@@ -31,7 +31,7 @@ describe("agent defaults schema", () => {
     "preserves fork CLI effort %s for compaction and memory flush",
     (effort) => {
       const compaction = { effort, memoryFlush: { effort } };
-      expect(AgentDefaultsSchema.parse({ compaction }).compaction).toEqual(compaction);
+      expect(AgentDefaultsSchema.parse({ compaction })?.compaction).toEqual(compaction);
     },
   );
 

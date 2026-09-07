@@ -2,6 +2,7 @@ import { SYSTEM_PROMPT_CACHE_BOUNDARY } from "@openclaw/ai/internal/shared";
 // System prompt tests cover the main prompt facade, prompt-surface routing, and
 // user-visible sections for owners, tools, safety, skills, and subagents.
 import { describe, expect, it } from "vitest";
+import { HEARTBEAT_PROMPT } from "../auto-reply/heartbeat.js";
 import { SILENT_REPLY_TOKEN } from "../auto-reply/tokens.js";
 import { CHANNEL_IDS } from "../channels/ids.js";
 import {
@@ -1500,6 +1501,7 @@ describe("buildAgentSystemPrompt", () => {
 
   it("removes shipped heartbeat prompt quotes from workspace context without dropping user guidance", () => {
     const heartbeatPrompts = [
+      HEARTBEAT_PROMPT,
       "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply PULSE_ACK.",
       "Follow the heartbeat monitor scratch context when provided. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply PULSE_ACK.",
       "Follow the heartbeat monitor scratch context when provided. Recurring tasks are cron jobs; create or change their schedules with cron tools or the openclaw cron CLI, not heartbeat scratch. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply PULSE_ACK.",
@@ -2050,6 +2052,7 @@ describe("buildAgentSystemPrompt", () => {
       toolNames: ["exec"],
       runtimeInfo: {
         channel: "discord",
+        capabilities: ["nativeApprovals"],
       },
     });
 

@@ -1,9 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
+import { resolveEmbeddedCliBackendDispatchEligibility } from "../agents/embedded-agent-runner/cli-backend-dispatch-eligibility.js";
 import type { RunEmbeddedAgentParams } from "../agents/embedded-agent-runner/run/params.js";
 import { createAgentHarnessToolSurfaceRuntimeCore } from "../agents/harness/tool-surface-bridge.js";
 import { createStubTool } from "../agents/test-helpers/agent-tool-stubs.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { createSessionCompanion } from "./session-companion.js";
+
+const selection = vi.hoisted(() => vi.fn());
 
 const runEmbeddedAgent = vi.hoisted(() =>
   vi.fn<
@@ -14,6 +17,23 @@ const runEmbeddedAgent = vi.hoisted(() =>
 );
 
 vi.mock("../agents/embedded-agent.js", () => ({ runEmbeddedAgent }));
+vi.mock("../plugins/cli-backends.runtime.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../plugins/cli-backends.runtime.js")>()),
+  resolveRuntimeCliBackends: () => [{ id: "claude-cli", subscriptionAuthDispatch: true }],
+}));
+vi.mock("../agents/model-runtime-aliases.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../agents/model-runtime-aliases.js")>()),
+  resolveCliRuntimeExecutionProvider: ({ provider }: { provider: string }) =>
+    provider === "anthropic" ? "claude-cli" : undefined,
+  isCliRuntimeAliasForProvider: ({ provider, runtime }: { provider: string; runtime: string }) =>
+    provider === "anthropic" && runtime === "claude-cli",
+}));
+vi.mock("../agents/model-auth.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../agents/model-auth.js")>()),
+  ensureAuthProfileStore: () => ({ profiles: {} }),
+  resolveAuthProfileOrder: () => [],
+  resolveModelAuthMode: () => "oauth",
+}));
 vi.mock("../agents/internal-session-effects.js", () => ({
   prepareInternalSessionEffectsSession: async () => ({
     sessionId: "companion-run",
@@ -25,11 +45,23 @@ vi.mock("../agents/sessions/index.js", () => ({
   SessionManager: { open: () => ({ appendMessage: () => {} }) },
 }));
 vi.mock("../agents/simple-completion-runtime.js", () => ({
-  resolveSimpleCompletionSelectionForAgent: () => ({ provider: "test", modelId: "model-a" }),
+  resolveSimpleCompletionSelectionForAgent: selection,
 }));
 
 describe("session companion embedded invocation", () => {
-  it("keeps read-only tools direct when the selected agent model opts into Code Mode", async () => {
+  it.each([
+    { provider: "test", modelId: "model-a" },
+    { provider: "anthropic", modelId: "model-a" },
+    {
+      provider: "anthropic",
+      modelId: "model-a",
+      runtimeProvider: "claude-cli",
+      profileId: "anthropic:subscription",
+      agentDir: "/tmp/companion-agent",
+    },
+  ])("keeps read-only tools and subscription dispatch for $provider", async (modelSelection) => {
+    runEmbeddedAgent.mockClear();
+    selection.mockReturnValue(modelSelection);
     const cfg: OpenClawConfig = {
       agents: {
         defaults: {
@@ -74,6 +106,25 @@ describe("session companion embedded invocation", () => {
       const invocation = runEmbeddedAgent.mock.calls[0]?.[0];
       if (!invocation) {
         throw new Error("Expected the companion embedded invocation");
+      }
+      expect(invocation).toMatchObject({
+        provider:
+          "runtimeProvider" in modelSelection
+            ? modelSelection.runtimeProvider
+            : modelSelection.provider,
+        model: modelSelection.modelId,
+        cliBackendDispatch: "subscription-auth",
+        timeoutMs: 60_000,
+        disableMessageTool: true,
+      });
+      // Exercise the real dispatch gate: forcing "openclaw" here silently
+      // overrides the subscription route despite the dispatch opt-in flag.
+      expect(resolveEmbeddedCliBackendDispatchEligibility(invocation)).toEqual(
+        modelSelection.provider === "anthropic" ? { provider: "claude-cli" } : undefined,
+      );
+      if ("profileId" in modelSelection) {
+        expect(invocation.authProfileId).toBe(modelSelection.profileId);
+        expect(invocation.agentDir).toBe(modelSelection.agentDir);
       }
       expect(invocation.config?.tools?.codeMode).toEqual(cfg.tools?.codeMode);
       const surface = createAgentHarnessToolSurfaceRuntimeCore({
