@@ -5,6 +5,14 @@ Docs: https://docs.openclaw.ai
 
 ## 2026.9.2
 
+### Fork-local (mlamp)
+
+- Preserve Claude CLI prompt replacements, `PULSE_ACK` acknowledgement filtering, bracketed silence suppression, and recovery from missing native transcripts.
+- Use native Claude compaction with the configured timeout and reasoning effort. Export durable memory through an isolated CLI completion without rotating the native conversation; use upstream isolated completion for labels and session-memory slugs.
+- Preserve explicit parent CLI runtime and authentication ownership during active-memory recall, and route subscription-backed companion requests through the CLI tool bridge.
+- Report unsupported Skill Workshop reviews before direct API execution when a CLI runtime is selected. The pre-existing Talk and voice-call CLI routing gaps remain outside this upgrade.
+- Package from September's self-contained workspace build and validator. Upstream removed npm shrinkwrap; preserve platform versions and keep the July fork branch available for rollback.
+
 ### Highlights
 
 - **Faster, more responsive chat:** keep chat, dashboards, and session interactions responsive while long transcripts and disk usage are processed, with direct dashboard lookup, less cold-load work, and durable history reads outside the Gateway event loop. (#136862, #138094, #138669, #138888, #138860, #138894)
